@@ -1,49 +1,30 @@
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.filters import Command, CommandStart
 from aiogram import F, Router
-from aiogram.fsm.context import FSMContext
-from app.states import Register
 import app.keyboards as kb
+from aiogram.types import ContentType
 
 router = Router()
 
 @router.message(CommandStart())
 async def start(message: Message):
-    await message.answer('Hello!', reply_markup=kb.main)
+    await message.answer('Здравствуйте! Это чат с HR-специалистом. Если вы хотите откликнуться на вакансию, пожалуйста, нажмите кнопку ниже. После нажатия Вам предложат отправить в чат номер телефона - на Ваше усмотрение', reply_markup=kb.applyJob)
 
-@router.message(Command('help'))
+@router.message(F.text == '✅ Откликнуться (не отправлять номер телефона)')
 async def help(message: Message):
-    await message.answer('Help!')
+    await message.answer('Информацию HR-специалисту передана. Он свяжется с Вами в ближайшее время в этом чате. Если хотите сообщить ещё какую-нибудь информацию о себе - пишите в этот чат, HR её получит', reply_markup=ReplyKeyboardRemove())
 
-@router.message(F.text == '📚 Каталог')
-async def catalog(message: Message):
-    await message.answer('Выберите категорию:', reply_markup=kb.catalog)
+@router.message(F.content_type == "contact")
+async def contact_received(message: Message):
+    contact = message.contact
+    await message.answer(f"Спасибо, {contact.first_name}, {contact.last_name}! Мы получили ваш контакт. HR-специалист свяжется с вами в ближайшее время.")
 
-@router.callback_query(F.data == 'books')
-async def books(callback: CallbackQuery):
-    await callback.answer('Вы выбрали категорию книг.') #) show_alert=True
-
-@router.message(Command('register'))
-async def register(message: Message, state: FSMContext):
-    await state.set_state(Register.name)
-    await message.answer('Введите Ваше имя')
-
-@router.message(Register.name)
-async def register_name(message: Message, state: FSMContext):
-    await state.update_data(name=message.text)
-    await state.set_state(Register.age)
-    await message.answer('Введите Ваш возраст')
-
-@router.message(Register.age)
-async def register_name(message: Message, state: FSMContext):
-    await state.update_data(age=message.text)
-    await state.set_state(Register.phone)
-    await message.answer('Введите Ваш телефон', reply_markup=kb.contact)
-
-@router.message(Register.phone, F.contact)
-async def register_name(message: Message, state: FSMContext):
-    await state.update_data(phone=message.contact)
-    data = await state.get_data()
-    # print(data['phone'].phone_number)
-    await message.answer(f'Ваше имя - {data["name"]} Ваш возраст - {data["age"]} Ваш телефон - {data["phone"].phone_number}, а ЕЩЁ {data["phone"].first_name, data["phone"].last_name, data["phone"].user_id}')
-    await state.clear()
+# обработчик всех сообщений
+@router.message()
+async def get_chat_id(message: Message):
+    user_id = message.from_user.username
+    print(user_id)
+    await message.answer(f"Ссылка на Вас: @{user_id}")
+# @router.message(F.text == True)
+# async def catalog(message: Message):
+#     await message.answer(F.text)

@@ -1,14 +1,5 @@
-from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton, 
-                           InlineKeyboardMarkup, InlineKeyboardButton)
+from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton)
 
-main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='📚 Каталог')], 
-                                     [KeyboardButton(text='🛒 Корзина')], 
-                                     [KeyboardButton(text='Контакты'), 
-                                      KeyboardButton(text='О нас')]], resize_keyboard=True, input_field_placeholder='Выберите пункт меню...')
-
-catalog = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='📚 Книги', callback_data='books')], 
-    [InlineKeyboardButton(text='Футболки', callback_data='t-shirt')],
-    [InlineKeyboardButton(text='Кепки', callback_data='cap')]])
-
-contact = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Отправить телефон', request_contact=True)]], resize_keyboard=True)
+applyJob = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='✅ Откликнуться (отправить номер телефона)', 
+            request_contact=True)], [KeyboardButton(text='✅ Откликнуться (не отправлять номер телефона)')
+            ]], resize_keyboard=True)
