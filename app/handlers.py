@@ -6,6 +6,7 @@ from aiogram.types import ContentType
 
 router = Router()
 
+# Функция возвращает словарь с информацией о пользователе
 def get_info_about_user(message, contact=False):
     info_about_user = {
         'name': message.from_user.first_name,
@@ -16,14 +17,17 @@ def get_info_about_user(message, contact=False):
         'text': message.text,
         'date': message.date,
     }
+    # Если пользователь согласился отправить номер телефона, то добавляем его в словарь
     if contact:
         info_about_user['phone'] = message.contact.phone_number
     return info_about_user
 
+# Обработка /start, на этом этапе ещё не собираем информацию о пользователе
 @router.message(CommandStart())
 async def start(message: Message):
     await message.answer('Здравствуйте! Это чат с HR-специалистом. Если вы хотите откликнуться на вакансию, пожалуйста, нажмите кнопку ниже. После нажатия Вам предложат отправить в чат номер телефона - на Ваше усмотрение', reply_markup=kb.applyJob)
 
+# Обработчик нажатия на кнопку "✅ Откликнуться (отправить номер телефона)"
 @router.message(F.content_type == "contact")
 async def contact_received(message: Message):
     info_about_user_with_phone = get_info_about_user(message, contact=True)
