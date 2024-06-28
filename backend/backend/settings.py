@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-e25dj=30_v&dvc08wm5n@4s=+c-tewd4g5he3iw25(j=)lyke#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['147.45.40.23', '95.220.5.105', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -78,10 +78,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'HrHubDB',
+        'NAME': 'hrhubdb',
         'USER': 'denis',
         'PASSWORD': 'admin1337',
-        'HOST': 'db',
+        'HOST': '147.45.40.23',
         'PORT': '5432',
     }
 }
