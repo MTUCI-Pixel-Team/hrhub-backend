@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  app:
+    user: root
+    build:
+      context: .
+      args:
+        - DEV=true
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=HrHubDB
+      - DB_USER=denis
+      - DB_PASS=admin1337
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - dev-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=HrHubDB
+      - POSTGRES_USER=denis
+      - POSTGRES_PASSWORD=admin1337
+
+volumes:
+  dev-db-data:
