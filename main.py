@@ -10,6 +10,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 # сохраняет куки в файл cookies.pkl
 # get_my_cookie(driver.get_cookies())
 
+# Пропускаем чат с техподдержкой
+number_of_chat = 2
+
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
 wait = WebDriverWait(driver, 10, poll_frequency=1)
@@ -38,13 +41,25 @@ driver.find_element('xpath',
                     '//a[@href="/profile/messenger" and @data-marker="header/messenger"]'
                     ).click()
 sleep(3)
+# Сколько всего чатов (за вычетом чата с техподдержкой)
+chats_len = len(driver.find_elements('xpath', 
+                    '//a[@data-marker="channels/channelLink"]'
+                    )[1:])
+print(f'Всего чатов: {chats_len}')
+for _ in range(chats_len):
+    sleep(3)
+    chat = driver.find_element('xpath', 
+                    f'(//a[@data-marker="channels/channelLink"])[{number_of_chat}]'
+                    )
+    chat.click()
 
-driver.find_element('xpath', 
-                    '(//a[@data-marker="channels/channelLink"])[2]'
-                    ).click()
+    sleep(3)
 
-sleep(3)
-
-spans = driver.find_elements('xpath', '//*[contains(@class, "message-base-left-")]//span[@data-marker="messageText"]')
-for span in spans:
-    print(span.text)
+    # Получаем все ЕГО сообщения
+    spans = driver.find_elements('xpath', '//*[contains(@class, "message-base-left-")]//span[@data-marker="messageText"]')
+    print(f'Chat {number_of_chat}')
+    for span in spans:
+        print(span.text)
+    number_of_chat += 1
+    driver.back()
+    sleep(3)
