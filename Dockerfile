@@ -7,7 +7,7 @@ COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 COPY ./backend /backend
 WORKDIR /backend
-EXPOSE 8000
+EXPOSE 7000
 
 ARG DEV=false
 RUN python -m venv /py && \
