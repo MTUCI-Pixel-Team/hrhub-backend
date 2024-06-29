@@ -1,9 +1,10 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.utils import extend_schema
 from .models import User
 from .serializers import UserSerializer, MyTokenObtainPairSerializer
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 
 
@@ -23,19 +24,13 @@ class MyTokenRefreshView(TokenRefreshView):
     pass
 
 
-class GetUserView(APIView):
-    """
-    Retrieve a user instance.
-    """
+@extend_schema(tags=['User'])
+class GetUserView(GenericAPIView):
+    serializer_class = UserSerializer
 
-    @extend_schema(tags=['User'])
-    def get(self, request, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = UserSerializer(user)
+    def get(self, request, user_id, *args, **kwargs):
+        user = get_object_or_404(User, id=user_id)
+        serializer = self.get_serializer(user)
         data = serializer.data.copy()
 
         if request.user.id == user.id:

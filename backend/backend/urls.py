@@ -9,6 +9,8 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='api-schema'), name='api-docs'),
     path('api/user/', include('user_app.urls'), name='api-users'),
+    path('api/messaging/', include('messaging_app.urls'), name='api-messaging'),
+    path('api/services/', include('services_app.urls'), name='api-services'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 SWAGGER_SETTINGS = {

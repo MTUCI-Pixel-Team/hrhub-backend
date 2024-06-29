@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'drf_spectacular',
     'user_app',
+    'messaging_app',
+    'services_app',
 ]
 
 MIDDLEWARE = [
