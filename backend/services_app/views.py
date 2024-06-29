@@ -40,3 +40,17 @@ class ServiceAccountListView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return ServiceAccount.objects.filter(user_id=user.id)
+
+
+@extend_schema(tags=['ServiceAccount'])
+class ServiceAccountDeleteView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        return ServiceAccount.objects.filter(user_id=self.request.user.id)
+
+    def delete(self, request, *args, **kwargs):
+        service_account = self.get_object()
+        service_account.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

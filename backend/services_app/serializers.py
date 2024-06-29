@@ -4,9 +4,11 @@ from user_app.models import User
 
 
 class ServiceAccountSerializer(serializers.ModelSerializer):
+    user_id = serializers.ReadOnlyField(source='user_id.id')
+
     class Meta:
         model = ServiceAccount
-        fields = ['id', 'service_name', 'service_username', 'created_at']
+        fields = ['id', 'user_id', 'service_name', 'service_username', 'created_at']
 
     def create(self, validated_data):
         user_id = self.context['request'].user.id
