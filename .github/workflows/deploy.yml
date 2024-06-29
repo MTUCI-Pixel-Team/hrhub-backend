@@ -16,9 +16,9 @@ jobs:
 
             - name: Deploy to Server
               env:
-                  HOST: ${{ secrets.HOST }}
-                  USER: ${{ secrets.USER }}
-                  PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+                  HOST: '147.45.40.23'
+                  USER: 'hr-hub'
+                  PASSWORD: 'admin1337'
               run: |
                   sshpass -p $PASSWORD ssh -o StrictHostKeyChecking=no $USER@$HOST << EOF
                     cd .
