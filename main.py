@@ -83,9 +83,12 @@ for _ in range(COUNT_UNREAD_CHAT):
     chat = get_unread_chat()
     sleep(3)
     chat.click()
-    print('Открываем чат')
     sleep(3)
-
+    # получаем имя пользователя и ссылку на чат
+    username = driver.find_element('xpath', '//a[starts-with(@class, "header-view-name-")]').text
+    link_to_chat = driver.current_url
+    print(f'Имя пользователя: {username}')
+    print(f'Ссылка на чат: {link_to_chat}')
     # Получаем все непрочитанные сообщения
     unreadMessage = driver.find_elements('xpath', """//div[starts-with(@class,
     'new-messages-delimiter-root-')]/following-sibling::
@@ -96,8 +99,6 @@ for _ in range(COUNT_UNREAD_CHAT):
     driver.execute_script("""var element = document.evaluate('//div[starts-with(@class, \"scroll-scroll\")]', document,
                         null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
                         element.scrollTop = element.scrollHeight;""")
-    print('Прокрутили вниз')
     sleep(3)
     driver.back()
-    print('Возвращаемся назад')
     sleep(3)
