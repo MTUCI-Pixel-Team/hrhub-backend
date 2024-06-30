@@ -47,9 +47,10 @@ driver = webdriver.Chrome(service=service)
 wait = WebDriverWait(driver, 10, poll_frequency=1)
 driver.get('https://www.avito.ru/')
 
+# сохраняет куки в файл cookies.pkl
 # from get_my_cookie import get_my_cookie
 
-# сохраняет куки в файл cookies.pkl
+# sleep(50)
 # get_my_cookie(driver.get_cookies())
 
 # Удаляем все куки
@@ -76,40 +77,46 @@ driver.find_element('xpath',
                     ).click()
 
 sleep(3)
-while True:
-    # Заглавные буквы т.к константа
-    COUNT_UNREAD_CHAT = get_count_unread_chats()
-    info_to_service = dict()
-    unread_messages = []
+# Для принудительной остановки программы с помощью Ctrl+C
+try:
+    while True:
+        # Заглавные буквы т.к константа
+        COUNT_UNREAD_CHAT = get_count_unread_chats()
+        info_to_service = dict()
+        unread_messages = []
 
-    print(f'Количество непрочитанных чатов: {COUNT_UNREAD_CHAT}')
-    for _ in range(COUNT_UNREAD_CHAT):
-        chat = get_unread_chat()
-        sleep(3)
-        chat.click()
-        sleep(3)
-        # получаем имя пользователя и ссылку на чат
-        username = driver.find_element('xpath', '//a[starts-with(@class, "header-view-name-")]').text
-        # url текущей страницы (страницы чата)
-        link_to_chat = driver.current_url
-        # Получаем все непрочитанные сообщения
-        find_unread_messages = driver.find_elements('xpath', """//div[starts-with(@class,
-        'new-messages-delimiter-root-')]/following-sibling::
-        div[starts-with(@class, 'message-base-root-')]//span[@data-marker='messageText']""")
-        print('Получили непрочитанные сообщения')
-        for message in find_unread_messages:
-            unread_messages.append(message.text)
-        # Прокручиваем чат до конца, чтобы он стал прочитанным
-        driver.execute_script("""var element = document.evaluate('//div[starts-with(@class, \"scroll-scroll\")]', document,
-                            null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
-                            element.scrollTop = element.scrollHeight;""")
-        sleep(3)
-        # Возвращаемся на страницу списка чатов
-        driver.back()
-        info_to_service['username'] = username
-        info_to_service['link_to_chat'] = link_to_chat
-        info_to_service['messages'] = unread_messages
-        """Тут должен быть код, который отправляет данные в сервис Илье"""
-        print(info_to_service)
-        sleep(3)
-    sleep(10)
+        print(f'Количество непрочитанных чатов: {COUNT_UNREAD_CHAT}')
+        for _ in range(COUNT_UNREAD_CHAT):
+            chat = get_unread_chat()
+            sleep(3)
+            chat.click()
+            sleep(3)
+            # получаем имя пользователя и ссылку на чат
+            username = driver.find_element('xpath', '//a[starts-with(@class, "header-view-name-")]').text
+            # url текущей страницы (страницы чата)
+            link_to_chat = driver.current_url
+            # Получаем все непрочитанные сообщения
+            find_unread_messages = driver.find_elements('xpath', """//div[starts-with(@class,
+            'new-messages-delimiter-root-')]/following-sibling::
+            div[starts-with(@class, 'message-base-root-')]//span[@data-marker='messageText']""")
+            print('Получили непрочитанные сообщения')
+            for message in find_unread_messages:
+                unread_messages.append(message.text)
+            # Прокручиваем чат до конца, чтобы он стал прочитанным
+            driver.execute_script("""var element = document.evaluate('//div[starts-with(@class, \"scroll-scroll\")]', document,
+                                null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
+                                element.scrollTop = element.scrollHeight;""")
+            sleep(3)
+            # Возвращаемся на страницу списка чатов
+            driver.back()
+            # Тут хранится информация
+            info_to_service['username'] = username
+            info_to_service['link_to_chat'] = link_to_chat
+            info_to_service['messages'] = unread_messages
+            """Тут должен быть код, который отправляет данные в сервис Илье"""
+            print(info_to_service)
+            sleep(3)
+        sleep(10)
+except KeyboardInterrupt:
+    print('Программа завершена')
+    exit(0)
