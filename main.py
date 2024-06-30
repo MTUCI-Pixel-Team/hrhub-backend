@@ -10,8 +10,41 @@ from webdriver_manager.chrome import ChromeDriverManager
 # сохраняет куки в файл cookies.pkl
 # get_my_cookie(driver.get_cookies())
 
-# Пропускаем чат с техподдержкой
-number_of_chat = 2
+
+def get_unread_chat():
+    """ 
+    Находит первый непрочитанный чат на странице.
+
+    Возвращает элемент WebElement, представляющий ссылку на непрочитанный чат,
+    или None, если непрочитанные чаты не найдены.
+    Сделал таким способом, а не через get_elements, потому что при
+    перезагрузке меняются данные и к старым чатам не получится обратиться
+    """
+    spans = driver.find_elements('xpath', "//div[starts-with(@class, 'chat-message-message-')]//span")
+    for span in spans:
+        # Получаем значение CSS свойства color для каждого элемента span
+        color = span.value_of_css_property('color')
+        if color == 'rgba(0, 0, 0, 1)':
+            # Пытаемся найти родительский элемент a для данного span
+            unread_сhat = span.find_element('xpath', './/ancestor::a')
+            break
+    return unread_сhat
+
+
+def get_count_unread_chats():
+    """
+    Возвращает количество непрочитанных чатов на странице.
+    """
+    cnt = 0
+    spans = driver.find_elements('xpath', "//div[starts-with(@class, 'chat-message-message-')]//span")
+    for span in spans:
+        # Получаем значение CSS свойства color для каждого элемента span
+        color = span.value_of_css_property('color')
+        if color == 'rgba(0, 0, 0, 1)':
+            # Пытаемся найти родительский элемент a для данного span
+            cnt += 1
+    return cnt
+
 
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
@@ -30,36 +63,41 @@ for cookie in cookies:
     driver.add_cookie(cookie)
     # print(cookie)
 
-sleep(5)
+sleep(3)
 # Обновляем страницу
 driver.refresh()
 
-sleep(5)
+sleep(3)
 
 # Переходим на страницу мессенджера
-driver.find_element('xpath', 
+driver.find_element('xpath',
                     '//a[@href="/profile/messenger" and @data-marker="header/messenger"]'
                     ).click()
 sleep(3)
-# Сколько всего чатов (за вычетом чата с техподдержкой)
-chats_len = len(driver.find_elements('xpath', 
-                    '//a[@data-marker="channels/channelLink"]'
-                    )[1:])
-print(f'Всего чатов: {chats_len}')
-for _ in range(chats_len):
+
+# Заглавные буквы т.к константа
+COUNT_UNREAD_CHAT = get_count_unread_chats()
+
+print(f'Количество непрочитанных чатов: {COUNT_UNREAD_CHAT}')
+for _ in range(COUNT_UNREAD_CHAT):
+    chat = get_unread_chat()
     sleep(3)
-    chat = driver.find_element('xpath', 
-                    f'(//a[@data-marker="channels/channelLink"])[{number_of_chat}]'
-                    )
     chat.click()
-
+    print('Открываем чат')
     sleep(3)
 
-    # Получаем все ЕГО сообщения
-    spans = driver.find_elements('xpath', '//*[contains(@class, "message-base-left-")]//span[@data-marker="messageText"]')
-    print(f'Chat {number_of_chat}')
-    for span in spans:
-        print(span.text)
-    number_of_chat += 1
+    # Получаем все непрочитанные сообщения
+    unreadMessage = driver.find_elements('xpath', """//div[starts-with(@class,
+    'new-messages-delimiter-root-')]/following-sibling::
+    div[starts-with(@class, 'message-base-root-')]//span[@data-marker='messageText']""")
+    print('Получили непрочитанные сообщения')
+    for message in unreadMessage:
+        print(message.text)
+    driver.execute_script("""var element = document.evaluate('//div[starts-with(@class, \"scroll-scroll\")]', document,
+                        null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
+                        element.scrollTop = element.scrollHeight;""")
+    print('Прокрутили вниз')
+    sleep(3)
     driver.back()
+    print('Возвращаемся назад')
     sleep(3)
