@@ -1,11 +1,31 @@
+"""
+    Основной файл для парсинга личных непрочитанных сообщений из авито. 
+    Тут происходят все основные действия. Подробнее расписано в комментариях
+"""
+
 import pickle
-from time import sleep
+import sys
+from time import time
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
+from paths import any_chat_path, icon_chats_path, spans_path, unread_chat_path, unread_messages_path, username_path
+
+SCRIPT_TO_DOWN_PAGE = """var element = document.evaluate('//div[starts-with(@class, \"scroll-scroll\")]', document,
+                                null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
+                                element.scrollTop = element.scrollHeight;"""
+
+
+def timer_10_sec():
+    """Таймер, на 10 секунд, который не дает программе идти дальше"""
+    start_time = time()
+    while time() - start_time < 10:
+        pass
+    return True
 
 def get_unread_chat():
     """ 
@@ -16,13 +36,13 @@ def get_unread_chat():
     Сделал таким способом, а не через get_elements, потому что при
     перезагрузке меняются данные и к старым чатам не получится обратиться
     """
-    spans = driver.find_elements('xpath', "//div[starts-with(@class, 'chat-message-message-')]//span")
+    spans = driver.find_elements(*spans_path)
     for span in spans:
         # Получаем значение CSS свойства color для каждого элемента span
         color = span.value_of_css_property('color')
         if color == 'rgba(0, 0, 0, 1)':
             # Пытаемся найти родительский элемент a для данного span
-            unread_сhat = span.find_element('xpath', './/ancestor::a')
+            unread_сhat = span.find_element(*unread_chat_path)
             break
     return unread_сhat
 
@@ -32,7 +52,7 @@ def get_count_unread_chats():
     Возвращает количество непрочитанных чатов на странице.
     """
     cnt = 0
-    spans = driver.find_elements('xpath', "//div[starts-with(@class, 'chat-message-message-')]//span")
+    spans = driver.find_elements(*spans_path)
     for span in spans:
         # Получаем значение CSS свойства color для каждого элемента span
         color = span.value_of_css_property('color')
@@ -44,7 +64,7 @@ def get_count_unread_chats():
 
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
-wait = WebDriverWait(driver, 10, poll_frequency=1)
+wait = WebDriverWait(driver, 15, poll_frequency=1)
 driver.get('https://www.avito.ru/')
 
 # сохраняет куки в файл cookies.pkl
@@ -65,18 +85,13 @@ for cookie in cookies:
     driver.add_cookie(cookie)
     # print(cookie)
 
-sleep(5)
 # Обновляем страницу
 driver.refresh()
 
-sleep(5)
-
-# Переходим на страницу мессенджера
-driver.find_element('xpath',
-                    '//a[@href="/profile/messenger" and @data-marker="header/messenger"]'
-                    ).click()
-
-sleep(3)
+# Ждем, пока появится кнопка чатов и нажимаем на неё
+wait.until(EC.visibility_of_element_located(icon_chats_path)).click()
+# Ждем, пока загрузятся чаты и приступаем к работе
+wait.until(EC.visibility_of_element_located(any_chat_path))
 # Для принудительной остановки программы с помощью Ctrl+C
 try:
     while True:
@@ -88,25 +103,19 @@ try:
         print(f'Количество непрочитанных чатов: {COUNT_UNREAD_CHAT}')
         for _ in range(COUNT_UNREAD_CHAT):
             chat = get_unread_chat()
-            sleep(3)
             chat.click()
-            sleep(3)
+            wait.until(EC.visibility_of_element_located(unread_messages_path))
             # получаем имя пользователя и ссылку на чат
-            username = driver.find_element('xpath', '//a[starts-with(@class, "header-view-name-")]').text
+            username = driver.find_element(*username_path).text
             # url текущей страницы (страницы чата)
             link_to_chat = driver.current_url
             # Получаем все непрочитанные сообщения
-            find_unread_messages = driver.find_elements('xpath', """//div[starts-with(@class,
-            'new-messages-delimiter-root-')]/following-sibling::
-            div[starts-with(@class, 'message-base-root-')]//span[@data-marker='messageText']""")
+            find_unread_messages = driver.find_elements(*unread_messages_path)
             print('Получили непрочитанные сообщения')
             for message in find_unread_messages:
                 unread_messages.append(message.text)
             # Прокручиваем чат до конца, чтобы он стал прочитанным
-            driver.execute_script("""var element = document.evaluate('//div[starts-with(@class, \"scroll-scroll\")]', document,
-                                null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
-                                element.scrollTop = element.scrollHeight;""")
-            sleep(3)
+            driver.execute_script(SCRIPT_TO_DOWN_PAGE)
             # Возвращаемся на страницу списка чатов
             driver.back()
             # Тут хранится информация
@@ -115,8 +124,7 @@ try:
             info_to_service['messages'] = unread_messages
             """Тут должен быть код, который отправляет данные в сервис Илье"""
             print(info_to_service)
-            sleep(3)
-        sleep(10)
+        timer_10_sec()
 except KeyboardInterrupt:
     print('Программа завершена')
-    exit(0)
+    sys.exit(0)
