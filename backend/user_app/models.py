@@ -20,6 +20,8 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(unique=True, max_length=255)
+    email = models.EmailField(unique=True)
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -30,7 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_permissions = models.ManyToManyField(Permission, related_name='custom_user_permissions')
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email']
 
     class Meta:
         managed = True
