@@ -27,6 +27,8 @@ def get_info_about_user(message, contact=False, service_account_id=None, text=No
 
 @router.message(CommandStart())
 async def start(message: Message):
+    user_id = message.from_user.id
+    user_states[user_id] = None
     keyboard = await kb.get_specialists_keyboard()
     await message.answer(
         'Здравствуйте! Это чат с HR-специалистом. Если вы хотите откликнуться, выберите HR-специалиста из списка',
@@ -47,13 +49,7 @@ async def contact_received(message: Message):
 @router.message()
 async def process_message(message: Message):
     user_id = message.from_user.id
-    if user_id in user_states and user_states[user_id] == "awaiting_additional_info":
-        user_info = get_info_about_user(message)
-        user_info['additional_info'] = message.text
-        print(user_info)
-        await message.answer("Спасибо за предоставленную информацию!")
-        user_states[user_id] = None  # Reset user state
-    elif "(ID: " in message.text:
+    if "(ID: " in message.text:
         service_account_id_text = re.search(r"\(ID: (\d+)\)", message.text)
         if service_account_id_text:
             service_account_id = int(service_account_id_text.group(1))
@@ -64,15 +60,26 @@ async def process_message(message: Message):
                 f"Вы выбрали специалиста с ID: {service_account_id}. Если вы хотите откликнуться на вакансию, "
                 f"пожалуйста, выберите, будете ли вы предоставлять свой телефон",
                 reply_markup=apply_keyboard)
-            user_states[message.from_user.id] = "awaiting_additional_info"
+            user_states[message.from_user.id] = "awaiting_phone_number_decision"
+    elif user_id in user_states:
+        if user_states[user_id] == "awaiting_phone_number_decision":
+            if message.text == 'Откликнуться (не отправлять номер телефона)':
+                await message.answer(
+                    "Спасибо за отклик. Ваша заявка на вакансию будет рассмотрена. Вы можете ввести дополнительную "
+                    "информацию, рассказать о себе. Данные будут так же переданы специалисту.",
+                    reply_markup=ReplyKeyboardRemove())
+                user_states[user_id] = "awaiting_additional_info"
+        elif user_states[user_id] == "awaiting_additional_info":
+            if message.text not in ['/start']:
+                user_info = get_info_about_user(message)
+                print(user_info)
+                await message.answer("Спасибо за предоставленную информацию!")
+                user_states[user_id] = None
+            else:
+                pass
         else:
-            await message.answer("Произошла ошибка при выборе специалиста. Пожалуйста, попробуйте снова.")
-    elif message.text == 'Откликнуться (не отправлять номер телефона)':
-        await message.answer(
-            "Спасибо за отклик. Ваша заявка на вакансию будет рассмотрена. Вы можете ввести дополнительную "
-            "информацию, рассказать о себе. Данные будут так же переданы специалисту.",
-            reply_markup=ReplyKeyboardRemove())
-        user_states[message.from_user.id] = "awaiting_additional_info"
+            await message.answer("Не удалось распознать ваш запрос. Возможно вы уже обратились к специалисту. Для "
+                                 "повторного обращения наберите /start")
     else:
         await message.answer("Не удалось распознать ваш запрос. Возможно вы уже обратились к специалисту. Для "
                              "повторного обращение наберите /start")
