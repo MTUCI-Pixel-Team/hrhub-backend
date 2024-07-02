@@ -33,6 +33,7 @@ class ServiceAccountCreateView(GenericAPIView):
 
 @extend_schema(tags=['ServiceAccount'])
 class ServiceAccountListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = ServiceAccountSerializer
     pagination_class = None
 
@@ -47,8 +48,7 @@ class TelegramServiceAccountListView(ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        user = self.request.user
-        return ServiceAccount.objects.filter(user_id=user.id, service_name='Telegram')
+        return ServiceAccount.objects.filter(service_name='Telegram')
 
 
 @extend_schema(tags=['ServiceAccount'])
