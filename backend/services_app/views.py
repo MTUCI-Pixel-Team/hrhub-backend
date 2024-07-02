@@ -33,7 +33,6 @@ class ServiceAccountCreateView(GenericAPIView):
 
 @extend_schema(tags=['ServiceAccount'])
 class ServiceAccountListView(ListAPIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = ServiceAccountSerializer
     pagination_class = None
 
@@ -44,7 +43,6 @@ class ServiceAccountListView(ListAPIView):
 
 @extend_schema(tags=['ServiceAccount'])
 class TelegramServiceAccountListView(ListAPIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = ServiceAccountSerializer
     pagination_class = None
 
