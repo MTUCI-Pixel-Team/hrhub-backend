@@ -10,7 +10,6 @@ from rest_framework.generics import DestroyAPIView, UpdateAPIView
 
 @extend_schema(tags=['Message'])
 class MessageCreateView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = MessageSerializer
 
     def post(self, request, *args, **kwargs):
