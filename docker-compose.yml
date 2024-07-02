@@ -21,3 +21,13 @@ services:
             - DB_USER=denis
             - DB_PASS=admin1337
             - DB_PORT=5432
+    tg_bot:
+        user: root
+        build:
+            context: .
+            args:
+                - DEV=true
+        volumes:
+            - ./backend:/backend
+        command: >
+            sh -c "python tg_bot/TG.py"
