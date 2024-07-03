@@ -1,0 +1,4 @@
+[MESSAGES CONTROL]
+disable=missing-final-newline
+[FORMAT]
+max-line-length=120
