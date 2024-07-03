@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "user_app",
     "messaging_app",
     "services_app",
+    'tg_bot',
 ]
 
 MIDDLEWARE = [
