@@ -1,22 +1,33 @@
+"""
+    Файл отвечает за чтение входящих писем с почты HR-a
+"""
 import email
 import imaplib
-import smtplib
 from email.header import decode_header
-from email.mime.text import MIMEText
+from time import sleep
 
 HR_EMAIL = 'jiopydryk011@yandex.ru'
 HR_PASSWORD = 'tdigxyrpiliyyyqq'
 
 def read_incoming_emails(email_user=HR_EMAIL, email_pass=HR_PASSWORD):
+    """
+        Функция возвращает список словарей. В словаре 4 поля: 'subject', 'username', 'email', 'text'
+        В списке содержатся все письма, которые были получены во время работы функции
+        Функция вызывается раз в 10 секунд
+    """
     mail = imaplib.IMAP4_SSL('imap.yandex.ru')
     mail.login(email_user, email_pass)
+    # Папка "Входящие"
     mail.select('inbox')
 
-    status, messages = mail.search(None, 'UNSEEN')
+    response_data = []
+
+    messages = mail.search(None, 'UNSEEN')[1]
     for num in messages[0].split():
-        status, data = mail.fetch(num, '(RFC822)')
-        print('data')
-        print(data)
+
+        message_info = {}
+
+        data = mail.fetch(num, '(RFC822)')[1]
         email_msg = data[0][1]
         msg = email.message_from_bytes(email_msg)
 
@@ -25,35 +36,33 @@ def read_incoming_emails(email_user=HR_EMAIL, email_pass=HR_PASSWORD):
         if isinstance(subject, bytes):
             subject = subject.decode()
         # Получение отправителя сообщения
-        from_ = msg.get("From")
-        print(f"Subject: {subject}")
-        print(f"From: {from_}")
+        from_ = msg.get("From").split('<')
+
+        message_info['subject'] = subject
+        message_info['username'] = from_[0].strip()
+        message_info['email'] = from_[1].replace('>', '').strip('\r\n')
 
         # Если сообщение многочастное, получаем тело сообщения
         if msg.is_multipart():
             for part in msg.walk():
                 if part.get_content_type() == "text/plain":
                     body = part.get_payload(decode=True).decode()
-                    print(f"Body: {body}")
-                    break
+                    try:
+                        if 'text' not in message_info.keys():
+                            message_info['text'] = body
+                        else:
+                            raise ValueError('Сообщение содержит несколько текстовых частей')
+                        break
+                    except ValueError as e:
+                        print(e)
         else:
             print('Сообщение не удалось декодировать')
-        
-
+        response_data.append(message_info)
     mail.logout()
-
-# Замените 'your_email@yandex.ru' и 'your_password' на ваши данные для входа
-read_incoming_emails()
-
-def send_email(subject, message, to_addr, from_addr=HR_EMAIL, password=HR_PASSWORD):
-    msg = MIMEText(message)
-    msg['Subject'] = subject
-    msg['From'] = from_addr
-    msg['To'] = to_addr
-
-    with smtplib.SMTP_SSL('smtp.yandex.ru', 465) as server:
-        server.login(from_addr, password)
-        server.sendmail(from_addr, to_addr, msg.as_string())
-        print("Письмо успешно отправлено")
-
-# send_email('Тестовое сообщение', 'Это тестовое сообщение.', 'dofskela@gmail.com')
+    if response_data:
+        return response_data
+    else:
+        return ('Новых писем нет')
+while True:
+    print(read_incoming_emails())
+    sleep(10)
