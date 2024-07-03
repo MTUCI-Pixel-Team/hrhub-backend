@@ -14,7 +14,7 @@ class ServiceAccountCreateView(GenericAPIView):
     serializer_class = ServiceAccountSerializer
 
     def post(self, request, *args, **kwargs):
-        allowed_service_names = ['Telegram', 'WhatsApp', 'hh.ru', 'Avito', 'Instagram', 'Facebook', 'vk', 'Viber']
+        allowed_service_names = ['Telegram', 'WhatsApp', 'hh.ru', 'Avito', 'Instagram', 'Facebook', 'vk', 'Yandex Mail']
         service_name = request.data.get('service_name')
         if service_name not in allowed_service_names:
             return Response({"detail": f"Invalid service name. Allowed values are {', '.join(allowed_service_names)}."},
@@ -49,6 +49,15 @@ class TelegramServiceAccountListView(ListAPIView):
 
     def get_queryset(self):
         return ServiceAccount.objects.filter(service_name='Telegram')
+
+
+@extend_schema(tags=['ServiceAccount'])
+class YandexMailServiceAccountListView(ListAPIView):
+    serializer_class = ServiceAccountSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return ServiceAccount.objects.filter(service_name='Yandex Mail')
 
 
 @extend_schema(tags=['ServiceAccount'])
