@@ -4,6 +4,7 @@ import app.keyboards as kb
 import re
 from aiogram import Router
 from aiogram import F
+from app.api_utils import send_message_to_db
 
 router = Router()
 user_states = {}
@@ -43,6 +44,7 @@ async def contact_received(message: Message):
     custom_text = "Потенциальный сотрудник откликнулся на ваше объявление и предоставил свой номер телефона"
     info_about_user_with_phone = get_info_about_user(message, contact=True, text=custom_text)
     print(info_about_user_with_phone)
+    await send_message_to_db(info_about_user_with_phone)
     await message.answer(f"Спасибо, {info_about_user_with_phone['name']}! Мы получили ваш контакт. HR-специалист "
                          f"свяжется с вами в ближайшее время. Можете отправить дополнительную информацию о себе, "
                          f"мы так же отправим её специалисту", reply_markup=ReplyKeyboardRemove())
@@ -72,6 +74,7 @@ async def process_message(message: Message):
                 custom_text = "Потенциальный сотрудник откликнулся на ваше объявление"
                 info_about_user = get_info_about_user(message, text=custom_text)
                 print(info_about_user)
+                await send_message_to_db(info_about_user)
                 await message.answer(
                     "Спасибо за отклик. Ваша заявка на вакансию будет рассмотрена. Вы можете ввести дополнительную "
                     "информацию, рассказать о себе. Данные будут так же переданы специалисту.",
@@ -81,6 +84,7 @@ async def process_message(message: Message):
             if message.text not in ['/start']:
                 user_info = get_info_about_user(message)
                 print(user_info)
+                await send_message_to_db(user_info)
                 await message.answer("Спасибо за предоставленную информацию!")
                 user_states[user_id]["state"] = None
             else:
