@@ -20,7 +20,7 @@ async def get_hr_list():
                 return None
 
 
-def read_incoming_emails(email_user, email_password, hr_id):
+async def read_incoming_emails(email_user, email_password, hr_id):
     """
         Функция отправляет каждое сообщение в виде словаря в БД для сохранения и передачи на front
 
@@ -79,7 +79,7 @@ def read_incoming_emails(email_user, email_password, hr_id):
             print('Сообщение не удалось декодировать')
         # Добавляем текст в данные, которые будем передавать
         response_data.append(message_info)
-        info_to_db(message_info)
+        await info_to_db(message_info)
     mail.logout()
     if response_data:
         return response_data
