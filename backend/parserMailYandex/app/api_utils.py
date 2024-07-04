@@ -20,14 +20,17 @@ async def get_hr_list():
     """
         Функция возвращает список почт HR-ов, их пароли приложений и id
     """
-    async with aiohttp.ClientSession() as session:
-        async with session.get('http://147.45.40.23:7000/api/service/list_yandex_mail/') as response:
-            if response.status == 200:
-                hrs_data = await response.json()
-                return [[hr['email'] for hr in hrs_data],
-                        [hr['app_password'] for hr in hrs_data],
-                        [hr['id'] for hr in hrs_data]]
-            return None
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get('http://147.45.40.23:7000/api/service/list_yandex_mail/') as response:
+                if response.status == 200:
+                    hrs_data = await response.json()
+                    return [[hr['email'] for hr in hrs_data],
+                            [hr['app_password'] for hr in hrs_data],
+                            [hr['id'] for hr in hrs_data]]
+                return None
+    except BaseException as e:
+        print('Ошибка при получении данных:', e)
 
 
 async def read_incoming_emails(email_user, email_password, hr_id):
@@ -40,69 +43,72 @@ async def read_incoming_emails(email_user, email_password, hr_id):
 
         Функция вызывается раз в 10 секунд (дольше, если hr'ов будет очень много)
     """
-    mail = imaplib.IMAP4_SSL('imap.yandex.ru')
     try:
-        mail.login(email_user, email_password)
-    except imaplib.IMAP4.error:
-        return 'Ошибка авторизации'
-    # Папка "Входящие"
-    mail.select('inbox')
-
-    response_data = []
-    # Непрочитанные сообщения
-    messages = mail.search(None, 'UNSEEN')[1]
-    for num in messages[0].split():
-
-        message_info = {}
-        # Получение данных о письме
-        data = mail.fetch(num, '(RFC822)')[1]
-        email_msg = data[0][1]
-        msg = email.message_from_bytes(email_msg)
-
-        # Получение темы сообщения
-        subject = decode_header(msg["Subject"])[0][0]
-        if isinstance(subject, bytes):
-            subject = subject.decode()
-        # Получение отправителя сообщения
-        from_ = msg.get("From").split('<')
-
-        message_info['hr_id'] = hr_id
-        message_info['subject'] = subject
-        message_info['username'] = from_[0].strip()
-        message_info['email'] = from_[1].replace('>', '').strip('\r\n')
-
-        # Если сообщение многочастное, получаем тело сообщения
-        if msg.is_multipart():
-            for part in msg.walk():
-                if part.get_content_type() == "text/plain":
-                    body = part.get_payload(decode=True).decode()
-                    try:
-                        if 'text' not in message_info:
-                            message_info['text'] = body
-                        else:
-                            raise MailTextException('Сообщение содержит несколько текстовых частей')
-                    except MailTextException as e:
-                        print(e)
-                        # Переходим к следующей итерации цикла т,к в этой не получится отдать данные в нормальном виде
-                        continue
-        else:
-            print('Сообщение не удалось декодировать')
-        # Добавляем текст в данные, которые будем передавать
+        mail = imaplib.IMAP4_SSL('imap.yandex.ru')
         try:
-            if 'text' not in message_info:
-                raise MailTextException('Ошибка при получении текста сообщения')
+            mail.login(email_user, email_password)
+        except imaplib.IMAP4.error:
+            return 'Ошибка авторизации'
+        # Папка "Входящие"
+        mail.select('inbox')
+
+        response_data = []
+        # Непрочитанные сообщения
+        messages = mail.search(None, 'UNSEEN')[1]
+        for num in messages[0].split():
+
+            message_info = {}
+            # Получение данных о письме
+            data = mail.fetch(num, '(RFC822)')[1]
+            email_msg = data[0][1]
+            msg = email.message_from_bytes(email_msg)
+
+            # Получение темы сообщения
+            subject = decode_header(msg["Subject"])[0][0]
+            if isinstance(subject, bytes):
+                subject = subject.decode()
+            # Получение отправителя сообщения
+            from_ = msg.get("From").split('<')
+
+            message_info['hr_id'] = hr_id
+            message_info['subject'] = subject
+            message_info['username'] = from_[0].strip()
+            message_info['email'] = from_[1].replace('>', '').strip('\r\n')
+
+            # Если сообщение многочастное, получаем тело сообщения
+            if msg.is_multipart():
+                for part in msg.walk():
+                    if part.get_content_type() == "text/plain":
+                        body = part.get_payload(decode=True).decode()
+                        try:
+                            if 'text' not in message_info:
+                                message_info['text'] = body
+                            else:
+                                raise MailTextException('Сообщение содержит несколько текстовых частей')
+                        except MailTextException as e:
+                            print(e)
+                            # Переходим к следующей итерации цикла т,к в этой не получится отдать данные в нормальном виде
+                            continue
             else:
-                response_data.append(message_info)
-                await info_to_db(message_info)
-        except MailTextException as e:
-            print(e)
-            # Переходим к следующей итерации цикла т,к в этой не получится отдать данные в нормальном виде
-            continue
-    mail.logout()
-    if response_data:
-        return response_data
-    else:
-        return 'Новых писем нет'
+                print('Сообщение не удалось декодировать')
+            # Добавляем текст в данные, которые будем передавать
+            try:
+                if 'text' not in message_info:
+                    raise MailTextException('Ошибка при получении текста сообщения')
+                else:
+                    response_data.append(message_info)
+                    await info_to_db(message_info)
+            except MailTextException as e:
+                print(e)
+                # Переходим к следующей итерации цикла т,к в этой не получится отдать данные в нормальном виде
+                continue
+        mail.logout()
+        if response_data:
+            return response_data
+        else:
+            return 'Новых писем нет'
+    except BaseException as e:
+        print('Ошибка при получении данных:', e)
 
 
 async def info_to_db(info_about_message):
