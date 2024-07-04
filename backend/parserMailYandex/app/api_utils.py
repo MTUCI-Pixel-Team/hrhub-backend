@@ -78,8 +78,16 @@ async def read_incoming_emails(email_user, email_password, hr_id):
         else:
             print('Сообщение не удалось декодировать')
         # Добавляем текст в данные, которые будем передавать
-        response_data.append(message_info)
-        await info_to_db(message_info)
+        try:
+            if 'text' not in message_info.keys():
+                raise ValueError('Ошибка при получении текста сообщения')
+            else:
+                response_data.append(message_info)
+                await info_to_db(message_info)
+        except ValueError as e:
+            print(e)
+            # Переходим к следующей итерации цикла т,к в этой не получится отдать данные в нормальном виде
+            continue
     mail.logout()
     if response_data:
         return response_data
