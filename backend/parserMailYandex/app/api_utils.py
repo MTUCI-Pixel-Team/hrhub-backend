@@ -133,4 +133,3 @@ async def info_to_db(info_about_message):
                 print("Сообщение успешно отправлено в базу данных")
             else:
                 print(f"Ошибка при отправке сообщения в базу данных. Статус: {response.status}, Ответ: {response_text}")
-

@@ -3,12 +3,14 @@
     Более говорящие названия упрощают работу с ошибками
 """
 
+
 class NotYandexMailException(Exception):
     """
         Ошибка вызывается, если почта не соответствует шаблону yandex.ru
     """
     def __init__(self, *args):
         super().__init__(*args)
+
 
 class MailTextException(Exception):
     """

@@ -13,6 +13,7 @@ from app.exceptions import NotYandexMailException
 # Паттерн для проверки почты на соответствие почте yandex.ru
 PATTERN_YANDEX_EMAIL = r'^[a-zA-Z0-9._%+-]+@yandex\.ru$'
 
+
 async def main():
     """
         Функция каждую итерацию получает список HR-ов и их почты, пароли приложений и id
