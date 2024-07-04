@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from email.header import decode_header
 
 import aiohttp
-from exceptions import MailTextException
+from app.exceptions import MailTextException
 
 
 async def get_hr_list():
