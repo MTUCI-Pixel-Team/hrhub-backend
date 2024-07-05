@@ -5,7 +5,6 @@ from .models import ServiceAccount
 from .serializers import ServiceAccountSerializer, AvitoRegistrationSerializer
 from rest_framework.generics import GenericAPIView, ListAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import ListAPIView
 from django.conf import settings
 from utils.avito.avito_functions import (
     get_tokens, get_user
