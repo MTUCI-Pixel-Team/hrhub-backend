@@ -8,7 +8,7 @@ from user_app.models import User
 from messaging_app.models import Message
 from services_app.models import ServiceAccount
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-import json
+import math
 
 class Command(BaseCommand):
     help = 'Запуск бота ВКонтакте'
@@ -37,6 +37,10 @@ class Command(BaseCommand):
                     self.send_help_message(vk, user_id)
                 elif message == "выбрать hr":
                     self.send_hr_list(vk, user_id)
+                elif message == "Вперед":
+                    self.send_hr_list(vk, user_id, page=self.hr_pages[user_id] + 1)
+                elif message == "Назад":
+                    self.send_hr_list(vk, user_id, page=self.hr_pages[user_id] - 1)
                 elif message.isdigit():
                     self.process_hr_selection(vk, user_id, int(message))
                 else:
@@ -65,18 +69,41 @@ class Command(BaseCommand):
             random_id=get_random_id()
         )
 
-    def send_hr_list(self, vk, user_id):
+    def send_hr_list(self, vk, user_id, page=1, items_per_page=10):
         vk_accounts = ServiceAccount.objects.filter(service_name="vk")
         hr_ids = [account.user_id_id for account in vk_accounts]
         hr_list = User.objects.filter(id__in=hr_ids).order_by("created_at")
+        
+        total_pages = math.ceil(len(hr_list) / items_per_page)
+    
+        start_index = (page - 1) * items_per_page
+        end_index = start_index + items_per_page
+        current_hr_list = hr_list[start_index:end_index]
+
         response = "Выберите HR, которому вы хотите написать:\n"
-        for hr in hr_list:
+        for hr in current_hr_list:
             response += f"{hr.id}. {hr.username}\n"
-        vk.messages.send(
-            user_id=user_id, 
-            message=response,
-            random_id=get_random_id()
-            )
+        response += f"Страница {page} из {total_pages}"
+           
+        if total_pages == 1:
+            vk.messages.send(
+                user_id=user_id, 
+                message=response,
+                random_id=get_random_id()
+                )   
+        else:    
+            keyboard = VkKeyboard(one_time=True)
+            if page > 1:
+                keyboard.add_button("Назад", VkKeyboardColor.PRIMARY)
+            if page < total_pages:
+                keyboard.add_button("Вперед", VkKeyboardColor.PRIMARY)
+    
+            vk.messages.send(
+                user_id=user_id, 
+                message=response,
+                keyboard=keyboard.get_keyboard(),
+                random_id=get_random_id()
+                )
 
     def process_hr_selection(self, vk, user_id, hr_id):
         try:
