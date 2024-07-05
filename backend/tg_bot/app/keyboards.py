@@ -18,8 +18,10 @@ async def get_specialists_keyboard():
 def apply_job_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text='Откликнуться (отправить номер телефона)', request_contact=True)],
-            [KeyboardButton(text='Откликнуться (не отправлять номер телефона)')]
+            [KeyboardButton(
+                text='Откликнуться (отправить номер телефона)', request_contact=True)],
+            [KeyboardButton(
+                text='Откликнуться (не отправлять номер телефона)')]
         ],
         resize_keyboard=True
     )

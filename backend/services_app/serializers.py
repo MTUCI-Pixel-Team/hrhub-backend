@@ -8,12 +8,14 @@ class ServiceAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceAccount
-        fields = ['id', 'user_id', 'service_name', 'service_username', 'email', 'app_password', 'created_at']
+        fields = ['id', 'user_id', 'service_name',
+                  'service_username', 'email', 'app_password', 'created_at']
 
     def validate(self, data):
         if data['service_name'].lower() == 'yandex mail':
             if not data.get('email') or not data.get('app_password'):
-                raise serializers.ValidationError("Email and app_password are required for Yandex Mail service.")
+                raise serializers.ValidationError(
+                    "Email and app_password are required for Yandex Mail service.")
         return data
 
     def create(self, validated_data):

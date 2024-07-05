@@ -31,4 +31,5 @@ async def send_message_to_db(info_about_user):
             if response.status == 201:
                 print("Сообщение успешно отправлено в базу данных")
             else:
-                print(f"Ошибка при отправке сообщения в базу данных. Статус: {response.status}, Ответ: {response_text}")
+                print(
+                    f"Ошибка при отправке сообщения в базу данных. Статус: {response.status}, Ответ: {response_text}")

@@ -42,7 +42,8 @@ async def start(message: Message):
 @router.message(F.content_type == "contact")
 async def contact_received(message: Message):
     custom_text = "Потенциальный сотрудник откликнулся на ваше объявление и предоставил свой номер телефона"
-    info_about_user_with_phone = get_info_about_user(message, contact=True, text=custom_text)
+    info_about_user_with_phone = get_info_about_user(
+        message, contact=True, text=custom_text)
     print(info_about_user_with_phone)
     await send_message_to_db(info_about_user_with_phone)
     await message.answer(f"Спасибо, {info_about_user_with_phone['name']}! Мы получили ваш контакт. HR-специалист "
@@ -58,7 +59,8 @@ async def process_message(message: Message):
         service_account_id_text = re.search(r"\(ID: (\d+)\)", message.text)
         if service_account_id_text:
             service_account_id = int(service_account_id_text.group(1))
-            info_about_user = get_info_about_user(message, service_account_id=service_account_id)
+            info_about_user = get_info_about_user(
+                message, service_account_id=service_account_id)
             print(info_about_user)
             apply_keyboard = kb.apply_job_keyboard()
             await message.answer(
@@ -72,7 +74,8 @@ async def process_message(message: Message):
         if current_state == "awaiting_phone_number_decision":
             if message.text == 'Откликнуться (не отправлять номер телефона)':
                 custom_text = "Потенциальный сотрудник откликнулся на ваше объявление"
-                info_about_user = get_info_about_user(message, text=custom_text)
+                info_about_user = get_info_about_user(
+                    message, text=custom_text)
                 print(info_about_user)
                 await send_message_to_db(info_about_user)
                 await message.answer(
