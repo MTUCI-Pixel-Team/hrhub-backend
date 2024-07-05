@@ -26,7 +26,13 @@ SECRET_KEY = "django-insecure-e25dj=30_v&dvc08wm5n@4s=+c-tewd4g5he3iw25(j=)lyke#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["147.45.40.23", "95.220.5.105", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = [
+    "147.45.40.23",
+    "95.220.5.105",
+    "127.0.0.1",
+    "hrhub.pixel-team.ru",
+    "localhost",
+]
 
 # Application definition
 
@@ -43,7 +49,7 @@ INSTALLED_APPS = [
     "user_app",
     "messaging_app",
     "services_app",
-    'tg_bot',
+    "tg_bot",
 ]
 
 MIDDLEWARE = [
@@ -167,5 +173,5 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
