@@ -3,9 +3,8 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from .models import ServiceAccount
 from .serializers import ServiceAccountSerializer
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import ListAPIView
 
 
 @extend_schema(tags=['ServiceAccount'])
@@ -58,6 +57,14 @@ class YandexMailServiceAccountListView(ListAPIView):
 
     def get_queryset(self):
         return ServiceAccount.objects.filter(service_name='Yandex Mail')
+
+
+@extend_schema(tags=['ServiceAccount'])
+class ServiceAccountUpdateView(UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = ServiceAccount.objects.all()
+    serializer_class = ServiceAccountSerializer
+    lookup_field = 'id'
 
 
 @extend_schema(tags=['ServiceAccount'])
