@@ -20,7 +20,7 @@ urlpatterns = [
     path('list_vk/', VKServiceAccountListView.as_view(),
          name='VKServiceAccount_list'),
     path('avito_registration/', AvitoRegistrationView.as_view(),
-         name='Avito_registration')
+         name='Avito_registration'),
     path('update/<int:id>/', ServiceAccountUpdateView.as_view(), name='ServiceAccount_update'),
     path('delete/<int:id>/', ServiceAccountDeleteView.as_view(), name='ServiceAccount_delete'),
 ]
