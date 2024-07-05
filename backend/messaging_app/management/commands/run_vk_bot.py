@@ -7,14 +7,18 @@ from django.conf import settings
 from user_app.models import User
 from messaging_app.models import Message
 from services_app.models import ServiceAccount
-
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+import json
 
 class Command(BaseCommand):
     help = 'Запуск бота ВКонтакте'
 
     def __init__(self):
-        self.hr_selections = {}
+        self.current_hr = None
 
+    def update_hr(self, new_hr):
+        self.current_hr = new_hr
+        
     def handle(self, *args, **options):
         vk_session = vk_api.VkApi(token=settings.VK_TOKEN)
         vk = vk_session.get_api()
@@ -28,11 +32,38 @@ class Command(BaseCommand):
                 message = event.text.lower()
 
                 if message == "старт":
+                    self.send_start_message(vk, user_id)
+                elif message == "помощь":
+                    self.send_help_message(vk, user_id)
+                elif message == "выбрать hr":
                     self.send_hr_list(vk, user_id)
                 elif message.isdigit():
                     self.process_hr_selection(vk, user_id, int(message))
                 else:
                     self.save_message(vk, user_id, message)
+
+    def send_start_message(self, vk, user_id):
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button("Выбрать HR", VkKeyboardColor.PRIMARY)
+        keyboard.add_button("Помощь", VkKeyboardColor.PRIMARY)
+        vk.messages.send(
+            user_id=user_id,
+            message="Привет! Для начала работы нажмите кнопку 'Выбрать HR'. Если вам нужна помощь, нажмите 'Помощь'.",
+            keyboard=keyboard.get_keyboard(),
+            random_id=get_random_id()
+        )
+        
+    def send_help_message(self, vk, user_id):
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button("Выбрать HR", VkKeyboardColor.PRIMARY)
+        vk.messages.send(
+            user_id=user_id,
+            message=("Этот бот предназначен для общения с HR,  зарегистрировавшимся на сайте HRhub. Для отправки сообщения HR нажмите кнопку 'Выбрать HR'\n"
+                "и выберите нужного HR из списка. Выбор нужно производить набором цифр. После этого напишите ваше сообщение. Сообщение не должно состоять\n"
+                "только из цифр, а также не должно быть одной из команд бота"),
+            keyboard=keyboard.get_keyboard(),
+            random_id=get_random_id()
+        )
 
     def send_hr_list(self, vk, user_id):
         vk_accounts = ServiceAccount.objects.filter(service_name="vk")
@@ -41,16 +72,19 @@ class Command(BaseCommand):
         response = "Выберите HR, которому вы хотите написать:\n"
         for hr in hr_list:
             response += f"{hr.id}. {hr.username}\n"
-        vk.messages.send(user_id=user_id, message=response,
-                         random_id=get_random_id())
+        vk.messages.send(
+            user_id=user_id, 
+            message=response,
+            random_id=get_random_id()
+            )
 
     def process_hr_selection(self, vk, user_id, hr_id):
         try:
             hr = User.objects.get(id=hr_id)
-            self.hr_selections[user_id] = hr_id
+            self.update_hr(hr)
             vk.messages.send(
                 user_id=user_id,
-                message=f"Вы выбрали {hr.username}. Напишите ваше сообщение.",
+                message=f"Вы выбрали {self.current_hr.username}. Напишите ваше сообщение.",
                 random_id=get_random_id()
             )
 
@@ -62,15 +96,14 @@ class Command(BaseCommand):
             )
 
     def save_message(self, vk, user_id, text):
-        hr_id = self.hr_selections.get(user_id)
-        service_account = ServiceAccount.objects.get(user_id=hr_id)
+        service_account = ServiceAccount.objects.get(user_id=self.current_hr)
         from_username = vk.users.get(user_ids=user_id)[0]["first_name"]
         personal_chat_link = f"https://vk.com/id{user_id}"
         # Получаем сохраненный выбор HR для пользователя
-        receiver = self.hr_selections.get(user_id)
-        if receiver is not None:
+        if self.current_hr is not None:
+            keyboard = VkKeyboard(one_time=True)
+            keyboard.add_button("Выбрать HR", VkKeyboardColor.PRIMARY)
             # Используем сохраненный hr_id для получения объекта HR
-            receiver = User.objects.get(id=receiver)
             Message.objects.create(
                 account=service_account,
                 from_username=from_username,
@@ -78,13 +111,17 @@ class Command(BaseCommand):
                 personal_chat_link=personal_chat_link,)
             vk.messages.send(
                 user_id=user_id,
-                message="Сообщение отправлено и сохранено. HR свяжется с вами в ближайшее время.",
+                message="Сообщение отправлено и сохранено. HR свяжется с вами в ближайшее время. Для того, чтобы изменить HR, нажмите 'Выбрать HR'. Также вы можете отправить еще одно сообщение.",
+                keyboard=keyboard.get_keyboard(),
                 random_id=get_random_id()
             )
         else:
+            keyboard = VkKeyboard(one_time=True)
+            keyboard.add_button("Выбрать HR", VkKeyboardColor.PRIMARY)
             # Обработка случая, когда HR не был выбран
             vk.messages.send(
                 user_id=user_id,
                 message="HR не был выбран. Пожалуйста, выберите HR.",
+                keyboard=keyboard.get_keyboard(),
                 random_id=get_random_id()
             )
