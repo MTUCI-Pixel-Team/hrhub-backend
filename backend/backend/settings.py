@@ -178,3 +178,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
 VK_TOKEN = 'vk1.a.NqJhH8uW_2FUi51NcjYfeZBkRPQukguALNozFtdmI4bBtqdPumiG6muSYSJh-6LycCXV0vCFD0aaV-wWxlSgirtO4TszG928nfeJXptqPIDKflaeFRf77ADvjiciwHaDz53AwiNb5Zwfzur9xfdUK_YsmjsD8PT-VkG6LV0iD0iGen95Tb7o1Ic3zUPJ81uXAiA5oGWBgeVkO3GMiD9Hdw'
+
+# авито
+CLIENT_ID = 'pIqySTcikdh-L4Z3oCOI'
+CLIENT_SECRET = '2SfzD9tl4WCrhgTfnVWggXj2zrpOBPiSW2V2PCyg'

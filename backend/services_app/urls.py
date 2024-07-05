@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     ServiceAccountCreateView, ServiceAccountListView,
     ServiceAccountDeleteView, TelegramServiceAccountListView,
-    YandexMailServiceAccountListView, VKServiceAccountListView
+    YandexMailServiceAccountListView, VKServiceAccountListView,
+    AvitoRegistrationView
 )
 
 urlpatterns = [
@@ -17,4 +18,6 @@ urlpatterns = [
          name='YandexMailServiceAccount_list'),
     path('list_vk/', VKServiceAccountListView.as_view(),
          name='VKServiceAccount_list'),
+    path('avito_registration/', AvitoRegistrationView.as_view(),
+         name='Avito_registration')
 ]

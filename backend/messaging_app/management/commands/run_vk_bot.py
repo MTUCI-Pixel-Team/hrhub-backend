@@ -10,6 +10,7 @@ from services_app.models import ServiceAccount
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import math
 
+
 class Command(BaseCommand):
     help = 'Запуск бота ВКонтакте'
 
@@ -18,7 +19,7 @@ class Command(BaseCommand):
 
     def update_hr(self, new_hr):
         self.current_hr = new_hr
-        
+
     def handle(self, *args, **options):
         vk_session = vk_api.VkApi(token=settings.VK_TOKEN)
         vk = vk_session.get_api()
@@ -56,15 +57,15 @@ class Command(BaseCommand):
             keyboard=keyboard.get_keyboard(),
             random_id=get_random_id()
         )
-        
+
     def send_help_message(self, vk, user_id):
         keyboard = VkKeyboard(one_time=True)
         keyboard.add_button("Выбрать HR", VkKeyboardColor.PRIMARY)
         vk.messages.send(
             user_id=user_id,
             message=("Этот бот предназначен для общения с HR,  зарегистрировавшимся на сайте HRhub. Для отправки сообщения HR нажмите кнопку 'Выбрать HR'\n"
-                "и выберите нужного HR из списка. Выбор нужно производить набором цифр. После этого напишите ваше сообщение. Сообщение не должно состоять\n"
-                "только из цифр, а также не должно быть одной из команд бота"),
+                     "и выберите нужного HR из списка. Выбор нужно производить набором цифр. После этого напишите ваше сообщение. Сообщение не должно состоять\n"
+                     "только из цифр, а также не должно быть одной из команд бота"),
             keyboard=keyboard.get_keyboard(),
             random_id=get_random_id()
         )
@@ -73,9 +74,9 @@ class Command(BaseCommand):
         vk_accounts = ServiceAccount.objects.filter(service_name="vk")
         hr_ids = [account.user_id_id for account in vk_accounts]
         hr_list = User.objects.filter(id__in=hr_ids).order_by("created_at")
-        
+
         total_pages = math.ceil(len(hr_list) / items_per_page)
-    
+
         start_index = (page - 1) * items_per_page
         end_index = start_index + items_per_page
         current_hr_list = hr_list[start_index:end_index]
@@ -84,26 +85,26 @@ class Command(BaseCommand):
         for hr in current_hr_list:
             response += f"{hr.id}. {hr.username}\n"
         response += f"Страница {page} из {total_pages}"
-           
+
         if total_pages == 1:
             vk.messages.send(
-                user_id=user_id, 
+                user_id=user_id,
                 message=response,
                 random_id=get_random_id()
-                )   
-        else:    
+            )
+        else:
             keyboard = VkKeyboard(one_time=True)
             if page > 1:
                 keyboard.add_button("Назад", VkKeyboardColor.PRIMARY)
             if page < total_pages:
                 keyboard.add_button("Вперед", VkKeyboardColor.PRIMARY)
-    
+
             vk.messages.send(
-                user_id=user_id, 
+                user_id=user_id,
                 message=response,
                 keyboard=keyboard.get_keyboard(),
                 random_id=get_random_id()
-                )
+            )
 
     def process_hr_selection(self, vk, user_id, hr_id):
         try:
