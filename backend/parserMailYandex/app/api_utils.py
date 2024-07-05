@@ -70,9 +70,14 @@ async def read_incoming_emails(email_user, email_password, hr_id):
             # Получение отправителя сообщения
             from_ = msg.get("From").split('<')
 
+            username = from_[0].strip()
+            if 'UTF-8' in username:
+                byte_username = decode_header(from_[0].strip())
+                username = ''.join(part[0].decode(part[1] or 'ascii') for part in byte_username)
+
             message_info['hr_id'] = hr_id
             message_info['subject'] = subject
-            message_info['username'] = from_[0].strip()
+            message_info['username'] = username
             message_info['email'] = from_[1].replace('>', '').strip('\r\n')
 
             # Если сообщение многочастное, получаем тело сообщения
@@ -131,5 +136,6 @@ async def info_to_db(info_about_message):
             response_text = await response.text()
             if response.status == 201:
                 print("Сообщение успешно отправлено в базу данных")
+                print(response_text)
             else:
                 print(f"Ошибка при отправке сообщения в базу данных. Статус: {response.status}, Ответ: {response_text}")
