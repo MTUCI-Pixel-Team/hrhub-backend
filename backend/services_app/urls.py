@@ -3,8 +3,7 @@ from .views import (
     ServiceAccountCreateView, ServiceAccountListView,
     ServiceAccountDeleteView, TelegramServiceAccountListView,
     YandexMailServiceAccountListView, VKServiceAccountListView,
-    AvitoRegistrationView
-    YandexMailServiceAccountListView,  ServiceAccountUpdateView
+    ServiceAccountUpdateView, AvitoRegistrationView
 )
 
 urlpatterns = [
