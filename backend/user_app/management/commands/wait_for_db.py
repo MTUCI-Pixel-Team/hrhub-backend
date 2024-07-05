@@ -29,4 +29,5 @@ class Command(BaseCommand):
         if db_up:
             self.stdout.write(self.style.SUCCESS('Database available!'))
         else:
-            self.stdout.write(self.style.ERROR('Could not connect to database after 10 attempts.'))
+            self.stdout.write(self.style.ERROR(
+                'Could not connect to database after 10 attempts.'))

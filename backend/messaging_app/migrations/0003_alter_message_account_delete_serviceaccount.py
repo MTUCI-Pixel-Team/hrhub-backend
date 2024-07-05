@@ -15,7 +15,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='message',
             name='account',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='services_app.serviceaccount'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to='services_app.serviceaccount'),
         ),
         migrations.DeleteModel(
             name='ServiceAccount',

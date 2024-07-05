@@ -29,7 +29,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
     groups = models.ManyToManyField(Group, related_name='custom_user_groups')
-    user_permissions = models.ManyToManyField(Permission, related_name='custom_user_permissions')
+    user_permissions = models.ManyToManyField(
+        Permission, related_name='custom_user_permissions')
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']

@@ -17,22 +17,26 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ServiceAccount',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('service_name', models.CharField(max_length=255)),
                 ('service_username', models.CharField(max_length=255)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
             name='Message',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('text', models.TextField()),
                 ('chat_id', models.BigIntegerField()),
                 ('from_user_id', models.BigIntegerField()),
                 ('received_at', models.DateTimeField()),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='messaging_app.serviceaccount')),
+                ('account', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='messaging_app.serviceaccount')),
             ],
         ),
     ]

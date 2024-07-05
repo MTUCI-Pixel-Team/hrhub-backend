@@ -9,4 +9,4 @@ class Message(models.Model):
     text = models.TextField()
     personal_chat_link = models.URLField(max_length=500, null=True, blank=True)
     is_read = models.BooleanField(default=False)
-    received_at = models.DateTimeField()
+    received_at = models.DateTimeField(auto_now=True)
