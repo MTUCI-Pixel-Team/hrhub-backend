@@ -3,7 +3,8 @@ from .views import (
     ServiceAccountCreateView, ServiceAccountListView,
     ServiceAccountDeleteView, TelegramServiceAccountListView,
     YandexMailServiceAccountListView, VKServiceAccountListView,
-    AvitoServiceAccountListView, AvitoRegistrationView
+    AvitoServiceAccountListView, AvitoRegistrationView,
+    ServiceAccountUpdateView, 
 )
 
 urlpatterns = [
@@ -21,5 +22,7 @@ urlpatterns = [
     path('list_avito/', AvitoServiceAccountListView.as_view(),
          name='VKServiceAccount_list'),
     path('avito_registration/', AvitoRegistrationView.as_view(),
-         name='Avito_registration')
+         name='Avito_registration'),
+    path('update/<int:id>/', ServiceAccountUpdateView.as_view(), 
+         name='ServiceAccount_update'),
 ]
