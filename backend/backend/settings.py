@@ -32,6 +32,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "hrhub.pixel-team.ru",
     "localhost",
+    "24a9-147-45-40-23.ngrok-free.app",
 ]
 
 # Application definition
@@ -150,6 +151,9 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.FormParser",
         "rest_framework.parsers.MultiPartParser",
     ],
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ),
 }
 
 SPECTACULAR_SETTINGS = {
