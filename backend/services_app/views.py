@@ -88,6 +88,15 @@ class ServiceAccountUpdateView(UpdateAPIView):
 
 
 @extend_schema(tags=['ServiceAccount'])
+class AvitoServiceAccountListView(ListAPIView):
+    serializer_class = ServiceAccountSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return ServiceAccount.objects.filter(service_name='Avito')
+
+
+@extend_schema(tags=['ServiceAccount'])
 class ServiceAccountDeleteView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
@@ -117,15 +126,17 @@ class AvitoRegistrationView(GenericAPIView):
     @extend_schema(
         description="Регистрация аккаунта по authorization_code",
         responses={200: ServiceAccountSerializer},
-        summary="Регистрация аккаунта avito",
+        summary="Регистрация аккаунта Avito",
     )
     def post(self, request):
         authorization_code = request.data.get('authorization_code')
-        print(authorization_code)
+        if 'service_username' in request.data:
+            service_username = request.data.get('service_username')
+        else:
+            service_username = "Ilia spit, poetomy tut etot text"
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             tokens = get_tokens(CLIENT_ID, CLIENT_SECRET, authorization_code)
-            print(tokens)
             if isinstance(tokens, int):
                 return Response({"detail": "Invalid authorization code."}, status=tokens)
             user = get_user(tokens['access_token'])
@@ -133,7 +144,8 @@ class AvitoRegistrationView(GenericAPIView):
                 return Response({"detail": "Invalid tokens."}, status=user)
             service_account_serializer = ServiceAccountSerializer(data={
                 'service_name': 'Avito',
-                'service_username': 'Пока хз',
+                'service_user_id': user['id'],
+                'service_username': service_username,
                 'access_token': tokens['access_token'],
                 'refresh_token': tokens['refresh_token'],
                 'user_id': request.user.id

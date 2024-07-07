@@ -73,10 +73,12 @@ def get_user(token, hr_id=None):
         }
         return user
 
-    if response.status_code == 403:
+    elif response.status_code == 403:
         service = get_object_or_404(ServiceAccount, user_id=hr_id, service_name='Avito')
         tokens = refresh_tokens(settings.CLIENT_ID, settings.CLIENT_SECRET, service.refresh_token)
-        if isinstance(tokens, int):
+        if tokens == 403:
+            return "Refresh token is invalid. Please, re-login."
+        elif isinstance(tokens, int):
             return tokens
         service.objects.update(access_token=tokens['access_token'], refresh_token=tokens['refresh_token'])
         return get_user(tokens['access_token'])
@@ -85,23 +87,75 @@ def get_user(token, hr_id=None):
         return response.status_code
 
 
-def get_messages(token, user_id, hr_id=None):
-    messages_info_url = f'https://api.avito.ru/messenger/v2/accounts/{user_id}/chats'
+def get_chats(token, user_id, hr_id=None):
+    chats_info_url = f'https://api.avito.ru/messenger/v2/accounts/{user_id}/chats&unread_only=true'
 
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
     }
 
-    response = requests.get(messages_info_url, headers=headers)
+    response = requests.get(chats_info_url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    elif response.status_code == 403:
+        service = get_object_or_404(ServiceAccount, user_id=hr_id, service_name='Avito')
+        tokens = refresh_tokens(settings.CLIENT_ID, settings.CLIENT_SECRET, service.refresh_token)
+        if tokens == 403:
+            return "Refresh token is invalid. Please, re-login."
+        elif isinstance(tokens, int):
+            return tokens
+        service.objects.update(access_token=tokens['access_token'], refresh_token=tokens['refresh_token'])
+        return get_chats(tokens['access_token'], user_id)
+    else:
+        return response.status_code
+
+
+def get_messages(token, user_id, chat_id, hr_id=None):
+    messages_url = f'https://api.avito.ru/messenger/v3/accounts/{user_id}/chats/{chat_id}/messages/'
+
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.get(messages_url, headers=headers)
     if response.status_code == 200:
         return response.json()
     if response.status_code == 403:
         service = get_object_or_404(ServiceAccount, user_id=hr_id, service_name='Avito')
         tokens = refresh_tokens(settings.CLIENT_ID, settings.CLIENT_SECRET, service.refresh_token)
-        if isinstance(tokens, int):
+        if tokens == 403:
+            return "Refresh token is invalid. Please, re-login."
+        elif isinstance(tokens, int):
             return tokens
         service.objects.update(access_token=tokens['access_token'], refresh_token=tokens['refresh_token'])
-        return get_messages(tokens['access_token'], user_id)
+        return get_messages(tokens['access_token'], user_id, chat_id)
     else:
         return response.status_code
+
+
+def read_message(token, user_id, chat_id):
+    read_message_url = f'https://api.avito.ru/messenger/v1/accounts/{user_id}/chats/{chat_id}/read'
+
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.get(read_message_url, headers=headers)
+    return response.status_code
+
+
+def set_webhook(token, webhook_url):
+    url = "https://api.avito.ru/messenger/v3/webhook"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+    data = {
+        "url": webhook_url,
+    }
+    response = requests.post(url, headers=headers, json=data)
+    return response

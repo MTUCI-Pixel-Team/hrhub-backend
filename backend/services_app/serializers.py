@@ -7,10 +7,11 @@ class ServiceAccountSerializer(serializers.ModelSerializer):
     user_id = serializers.ReadOnlyField(source='user_id.id')
     access_token = serializers.CharField(write_only=True, required=False)
     refresh_token = serializers.CharField(write_only=True, required=False)
+    service_user_id = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = ServiceAccount
-        fields = ['id', 'user_id', 'service_name',
+        fields = ['id', 'user_id', 'service_user_id', 'service_name',
                   'service_username', 'email', 'app_password', 'created_at',
                   'access_token', 'refresh_token']
 
@@ -29,3 +30,4 @@ class ServiceAccountSerializer(serializers.ModelSerializer):
 
 class AvitoRegistrationSerializer(serializers.Serializer):
     authorization_code = serializers.CharField(max_length=255)
+    service_username = serializers.CharField(max_length=255)

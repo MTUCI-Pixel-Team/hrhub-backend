@@ -32,6 +32,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "hrhub.pixel-team.ru",
     "localhost",
+    "24a9-147-45-40-23.ngrok-free.app",
 ]
 
 # Application definition

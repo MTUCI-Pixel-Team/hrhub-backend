@@ -7,6 +7,12 @@ from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import DestroyAPIView, UpdateAPIView
 from services_app.models import ServiceAccount
+from django.views.decorators.csrf import csrf_exempt
+import json
+from utils.avito.avito_functions import set_webhook
+from rest_framework.decorators import api_view
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
 
 @extend_schema(tags=['Message'])
@@ -64,3 +70,39 @@ class UnreadMessageListView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Message.objects.filter(account__user_id=user.id, is_read=False)
+
+
+@csrf_exempt
+@extend_schema(tags=['Message'])
+def webhook(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body).get('payload')
+            if data.get('type') == 'message':
+                message_info = data.get('value')
+                print("Получено сообщение от Webhook:", message_info)
+                user_id = message_info.get('user_id')
+                author_id = message_info.get('author_id')
+                chat_id = message_info.get('chat_id')
+                text = message_info.get('content').get('text')
+                print("user_id:", user_id)
+                print("author_id:", author_id)
+                print("chat_id:", chat_id)
+                print("text:", text)
+                return HttpResponse(status=200)
+            else:
+                return HttpResponse(status=204)
+        except json.JSONDecodeError:
+            return HttpResponse(status=400)
+
+
+@api_view(['POST'])
+@extend_schema(tags=['Message'])
+def register_webhook(request):
+    user = request.user
+    token = get_object_or_404(ServiceAccount, user_id=user.id).access_token
+    if user and token:
+        response = set_webhook(token, 'https://24a9-147-45-40-23.ngrok-free.app/api/message/webhook/')
+        return Response(response)
+    else:
+        return Response({"User or token not found"}, status=status.HTTP_404_NOT_FOUND)
