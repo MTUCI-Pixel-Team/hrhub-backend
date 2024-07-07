@@ -31,3 +31,4 @@ typing_extensions == 4.12.2
 yarl == 1.9.4
 urllib3 == 2.2.2
 charset_normalizer == 3.3.2
+channels == 4.1.0

@@ -1,3 +1,4 @@
+import json
 from rest_framework import status
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
@@ -8,11 +9,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import DestroyAPIView, UpdateAPIView
 from services_app.models import ServiceAccount
 from django.views.decorators.csrf import csrf_exempt
-import json
-from utils.avito.avito_functions import set_webhook
-from rest_framework.decorators import api_view
+from utils.avito.avito_functions import set_webhook, get_chats, read_message
+from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
+from user_app.models import User
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 @extend_schema(tags=['Message'])
@@ -73,36 +76,70 @@ class UnreadMessageListView(ListAPIView):
 
 
 @csrf_exempt
-@extend_schema(tags=['Message'])
-def webhook(request):
+def avito_webhook(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body).get('payload')
             if data.get('type') == 'message':
-                message_info = data.get('value')
-                print("Получено сообщение от Webhook:", message_info)
-                user_id = message_info.get('user_id')
-                author_id = message_info.get('author_id')
-                chat_id = message_info.get('chat_id')
-                text = message_info.get('content').get('text')
-                print("user_id:", user_id)
-                print("author_id:", author_id)
-                print("chat_id:", chat_id)
-                print("text:", text)
+                user_id = data.get('value').get('user_id')
+                service_account = get_object_or_404(ServiceAccount, service_user_id=user_id)
+                user = get_object_or_404(User, id=service_account.user_id_id)
+                chats = get_chats(user.id).get('chats')
+                chats_info = []
+
+                for chat in chats:
+                    text = chat.get('last_message').get('content').get('text')
+                    chat_id = chat.get('id')
+                    for chat_partner in chat.get('users'):
+                        if chat_partner.get('id') != user_id:
+                            chats_info.append({
+                                'from_username': chat_partner.get('name'),
+                                'personal_chat_link': chat_partner.get('public_user_profile').get('url'),
+                                'text': text,
+                                'chat_id': chat_id
+                            })
+                            break
+
+                for chat_info in chats_info:
+                    message_serializer = MessageSerializer(data={
+                        'account_id': service_account.id,
+                        'from_username': chat_info.get('from_username'),
+                        'text': chat_info.get('text'),
+                        'personal_chat_link': chat_info.get('personal_chat_link')
+                    })
+                    if message_serializer.is_valid():
+                        message_serializer.save()
+                        read_message(user.id, chat_info.get('chat_id'))
+
+                        channel_layer = get_channel_layer()
+                        async_to_sync(channel_layer.group_send)(
+                            "messages",
+                            {
+                                "type": "chat_message",
+                                "message": message_serializer.data
+                            }
+                        )
+
                 return HttpResponse(status=200)
             else:
                 return HttpResponse(status=204)
+
         except json.JSONDecodeError:
             return HttpResponse(status=400)
 
 
 @api_view(['POST'])
-@extend_schema(tags=['Message'])
-def register_webhook(request):
+@permission_classes([IsAuthenticated])
+@extend_schema(
+    description="Подключает пользователя к вебхуку уведомлений Avito. Это позволяет получать сообщения в реальном времени.",
+    responses={200: {"ok": "True"}},
+    summary="Подключение вебхука для Avito",
+)
+def register_avito_webhook(request):
     user = request.user
     token = get_object_or_404(ServiceAccount, user_id=user.id).access_token
     if user and token:
-        response = set_webhook(token, 'https://24a9-147-45-40-23.ngrok-free.app/api/message/webhook/')
+        response = set_webhook(token, 'http://147.45.40.23:7000//api/message/avito_webhook/')
         return Response(response)
     else:
         return Response({"User or token not found"}, status=status.HTTP_404_NOT_FOUND)

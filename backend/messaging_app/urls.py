@@ -10,6 +10,6 @@ urlpatterns = [
     path('update/<int:id>/', views.MessageUpdateView.as_view(),
          name='Message_update'),
     path('unread/', views.UnreadMessageListView.as_view(), name='Message_unread'),
-    path('webhook/', csrf_exempt(views.webhook), name='webhook'),
-    path('register_webhook/', views.register_webhook, name='register_webhook'),
+    path('avito_webhook/', csrf_exempt(views.avito_webhook), name='avito_webhook'),
+    path('register_avito_webhook/', views.register_avito_webhook, name='register_avito_webhook'),
 ]

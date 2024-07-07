@@ -32,7 +32,6 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "hrhub.pixel-team.ru",
     "localhost",
-    "24a9-147-45-40-23.ngrok-free.app",
 ]
 
 # Application definition
@@ -50,6 +49,7 @@ INSTALLED_APPS = [
     "user_app",
     "messaging_app",
     "services_app",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -83,6 +83,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
+ASGI_APPLICATION = 'backend.routing.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 

@@ -139,7 +139,7 @@ class AvitoRegistrationView(GenericAPIView):
             tokens = get_tokens(CLIENT_ID, CLIENT_SECRET, authorization_code)
             if isinstance(tokens, int):
                 return Response({"detail": "Invalid authorization code."}, status=tokens)
-            user = get_user(tokens['access_token'])
+            user = get_user(tokens['access_token'], hr_id=request.user.id)
             if isinstance(user, int):
                 return Response({"detail": "Invalid tokens."}, status=user)
             service_account_serializer = ServiceAccountSerializer(data={

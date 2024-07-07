@@ -3,6 +3,8 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.conf import settings
 from django.conf.urls.static import static
+from channels.routing import ProtocolTypeRouter, URLRouter
+from messaging_app.consumers import MessageConsumer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -13,6 +15,12 @@ urlpatterns = [
     path('api/message/', include('messaging_app.urls'), name='api-messaging'),
     path('api/service/', include('services_app.urls'), name='api-services'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+application = ProtocolTypeRouter({
+    'websocket': URLRouter([
+        path('ws/messages/', MessageConsumer.as_asgi()),
+    ]),
+})
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
