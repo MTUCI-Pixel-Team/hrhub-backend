@@ -5,7 +5,6 @@ from .views import (
     YandexMailServiceAccountListView, VKServiceAccountListView,
     AvitoServiceAccountListView, AvitoRegistrationView,
     ServiceAccountUpdateView,
-)
 
 urlpatterns = [
     path('create/', ServiceAccountCreateView.as_view(),
