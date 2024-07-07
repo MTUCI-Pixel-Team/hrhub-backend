@@ -130,10 +130,7 @@ class AvitoRegistrationView(GenericAPIView):
     )
     def post(self, request):
         authorization_code = request.data.get('authorization_code')
-        if 'service_username' in request.data:
-            service_username = request.data.get('service_username')
-        else:
-            service_username = "Ilia spit, poetomy tut etot text"
+        service_username = request.data.get('service_username')
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             tokens = get_tokens(CLIENT_ID, CLIENT_SECRET, authorization_code)
