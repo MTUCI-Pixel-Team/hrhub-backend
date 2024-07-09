@@ -34,6 +34,7 @@ class MessageCreateView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save(account=account)
+            send_message_to_user(account.user_id_id, serializer.data, account.service_name)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
