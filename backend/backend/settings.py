@@ -37,6 +37,8 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
+    "channels",
     "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -49,7 +51,6 @@ INSTALLED_APPS = [
     "user_app",
     "messaging_app",
     "services_app",
-    "channels",
 ]
 
 MIDDLEWARE = [
@@ -83,11 +84,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-ASGI_APPLICATION = 'backend.routing.application'
+ASGI_APPLICATION = "backend.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'MIDDLEWARE': [
+            'django.contrib.auth.middleware.AuthenticationMiddleware',
+        ],
     }
 }
 # Database

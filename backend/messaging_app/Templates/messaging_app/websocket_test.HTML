@@ -6,47 +6,37 @@
 <body>
     <h1>WebSocket Test</h1>
     <div id="messages"></div>
-    <input type="text" id="messageInput" placeholder="Type a message">
-    <button onclick="sendMessage()">Send</button>
 
     <script>
-        const socket = new WebSocket("ws://localhost:8000/ws/messages/");
+        // Получите токен пользователя (это может быть получено через AJAX или прямо из шаблона)
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIwNTIxMzExLCJpYXQiOjE3MjA0MzQ5MTEsImp0aSI6ImQxNWU3Yjc2MmY1YzQ0Y2RiODdjNmI4YjZhMGQ1ZThmIiwidXNlcl9pZCI6MjAsInVzZXJuYW1lIjoiYXZpdG8xMSJ9.Ly3npcKyEgQ2jCQGMJB9L4YjnU6ul0SfcQasD-R2ouM";
+        // Создаем WebSocket соединение
+        const socket = new WebSocket(`ws://127.0.0.1:8000/ws/messages/?token=${token}`);
         
-        socket.onopen = function (e) {
-            document.getElementById("messages").innerHTML += "<p>Connected</p>";
+        socket.onopen = function(event) {
+            console.log('WebSocket connection established');
         };
-        
-        socket.onmessage = function (event) {
-            const data = JSON.parse(event.data);
-            const message = data.message;
-            
-            let messageHtml = `
-                <p>
-                    <strong>From: ${message.from_username}</strong><br>
-                    Text: ${message.text}<br>
-                    Personal Chat Link: <a href="${message.personal_chat_link}">${message.personal_chat_link}</a>
-                </p>`;
-            
-            document.getElementById("messages").innerHTML += messageHtml;
+
+        socket.onmessage = function(event) {
+            console.log('Message received: ' + event.data);
+            const messageData = JSON.parse(event.data);
+            const messagesDiv = document.getElementById("messages");
+            const messageElement = document.createElement("p");
+            messageElement.textContent = messageData.message;
+            messagesDiv.appendChild(messageElement);
         };
-        
-        socket.onclose = function (event) {
-            document.getElementById("messages").innerHTML += "<p>Disconnected</p>";
+
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                console.log(`Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
+            } else {
+                console.log('Соединение прервано');
+            }
         };
         
         socket.onerror = function (error) {
             document.getElementById("messages").innerHTML += "<p>Error: " + error.message + "</p>";
         };
-
-        function sendMessage() {
-            const messageInput = document.getElementById("messageInput");
-            const message = messageInput.value;
-            if (message) {
-                console.log("Sending message:", message);
-                socket.send(JSON.stringify({message: message}));
-                messageInput.value = "";
-            }
-        }
     </script>
 </body>
 </html>

@@ -16,6 +16,18 @@ from django.http import HttpResponse
 from user_app.models import User
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.views.generic import TemplateView
+
+
+def send_message_to_user(user_id, message, type):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{user_id}",
+        {
+            "type": f"{type}_send_message",
+            "message": message,
+        }
+    )
 
 
 @extend_schema(tags=['Message'])
@@ -111,14 +123,7 @@ def avito_webhook(request):
                         message_serializer.save()
                         read_message(user.id, chat_info.get('chat_id'))
 
-                        channel_layer = get_channel_layer()
-                        async_to_sync(channel_layer.group_send)(
-                            "messages",
-                            {
-                                "type": "chat_message",
-                                "message": message_serializer.data
-                            }
-                        )
+                        send_message_to_user(user.id, message_serializer.data, 'avito')
 
                 return HttpResponse(status=200)
             else:
@@ -139,7 +144,12 @@ def register_avito_webhook(request):
     user = request.user
     token = get_object_or_404(ServiceAccount, user_id=user.id).access_token
     if user and token:
-        response = set_webhook(token, 'http://147.45.40.23:7000//api/message/avito_webhook/')
+        url = 'http://147.45.40.23:7000//api/message/avito_webhook/'
+        response = set_webhook(token, url)
         return Response(response)
     else:
         return Response({"User or token not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class WebSocketTestView(TemplateView):
+    template_name = 'messaging_app/websocket_test.html'
