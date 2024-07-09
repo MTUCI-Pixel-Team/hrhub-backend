@@ -1,43 +1,53 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  app:
-    user: root
-    build:
-      context: .
-      args:
-        - DEV=true
-    ports:
-      - "7000:7000"
-    volumes:
-      - ./backend:/backend
-    command: >
-      sh -c "python manage.py wait_for_db &&
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:7000"
-    environment:
-      - DB_HOST=147.45.40.23
-      - DB_NAME=hrhubdb
-      - DB_USER=denis
-      - DB_PASS=admin1337
-      - DB_PORT=5432
-  tg_bot:
-    user: root
-    build:
-      context: .
-      args:
-        - DEV=true
-    volumes:
-      - ./backend:/backend
-    command: >
-      sh -c "python tg_bot/TG.py"
-  vk_bot:
-    user: root
-    build:
-      context: .
-      args:
-        - DEV=true
-    volumes:
-      - ./backend:/backend
-    command: >
-      sh -c "python manage.py run_vk_bot"
+    app:
+        user: root
+        build:
+            context: .
+            args:
+                - DEV=true
+        ports:
+            - '7000:7000'
+        volumes:
+            - ./backend:/backend
+        command: >
+            sh -c "python manage.py wait_for_db &&
+                   python manage.py migrate &&
+                   python manage.py runserver 0.0.0.0:7000"
+        environment:
+            - DB_HOST=147.45.40.23
+            - DB_NAME=hrhubdb
+            - DB_USER=denis
+            - DB_PASS=admin1337
+            - DB_PORT=5432
+    tg_bot:
+        user: root
+        build:
+            context: .
+            args:
+                - DEV=true
+        volumes:
+            - ./backend:/backend
+        command: >
+            sh -c "python tg_bot/TG.py"
+    mail_yandex:
+        user: root
+        build:
+            context: .
+            args:
+                - DEV=true
+        volumes:
+            - ./backend:/backend
+        command: >
+            sh -c "python parserMailYandex/main.py"
+    vk_bot:
+        user: root
+        build:
+            context: .
+            args:
+                - DEV=true
+        volumes:
+            - ./backend:/backend
+        command: >
+            sh -c "python manage.py run_vk_bot"
