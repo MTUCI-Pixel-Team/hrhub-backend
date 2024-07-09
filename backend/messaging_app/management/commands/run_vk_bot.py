@@ -5,10 +5,11 @@ from vk_api.utils import get_random_id
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from user_app.models import User
-from messaging_app.models import Message
 from services_app.models import ServiceAccount
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from django.shortcuts import get_object_or_404
+from messaging_app.serializers import MessageSerializer
+from utils.websocket.websocket_functions import send_message_to_user
 import math
 import time
 import re
@@ -231,26 +232,34 @@ class Command(BaseCommand):
         personal_chat_link = f"https://vk.com/id{user_id}"
         if self.current_hr is not None:
             if self.phone_number[user_id]:
-                Message.objects.create(
-                    account=service_account,
-                    from_username=from_username,
-                    from_userphone=self.phone_number[user_id],
-                    text=text,
-                    personal_chat_link=personal_chat_link,
-                )
+                message_serializer = MessageSerializer(data={
+                    'account_id': service_account.id,
+                    'from_username': from_username,
+                    'from_userphone': self.phone_number[user_id],
+                    'text': text,
+                    'personal_chat_link': personal_chat_link
+                })
+                if message_serializer.is_valid():
+                    message_serializer.save()
             else:
-                Message.objects.create(
-                    account=service_account,
-                    from_username=from_username,
-                    text=text,
-                    personal_chat_link=personal_chat_link,
-                )
+                message_serializer = MessageSerializer(data={
+                    'account_id': service_account.id,
+                    'from_username': from_username,
+                    'text': text,
+                    'personal_chat_link': personal_chat_link
+                })
+                if message_serializer.is_valid():
+                    message_serializer.save()
+
             vk.messages.send(
                 user_id=user_id,
                 message="Сообщение отправлено и сохранено. HR свяжется с вами в ближайшее время.",
                 random_id=get_random_id()
             )
             self.user_states[user_id] = None
+
+            send_message_to_user(self.current_hr.id, message_serializer.data, 'vk')
+
         else:
             keyboard = VkKeyboard(one_time=True)
             keyboard.add_button("Выбрать HR", VkKeyboardColor.PRIMARY)

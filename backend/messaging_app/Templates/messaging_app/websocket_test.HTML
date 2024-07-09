@@ -6,47 +6,84 @@
 <body>
     <h1>WebSocket Test</h1>
     <div id="messages"></div>
-    <input type="text" id="messageInput" placeholder="Type a message">
-    <button onclick="sendMessage()">Send</button>
 
     <script>
-        const socket = new WebSocket("ws://localhost:8000/ws/messages/");
-        
-        socket.onopen = function (e) {
-            document.getElementById("messages").innerHTML += "<p>Connected</p>";
-        };
-        
-        socket.onmessage = function (event) {
-            const data = JSON.parse(event.data);
-            const message = data.message;
-            
-            let messageHtml = `
-                <p>
-                    <strong>From: ${message.from_username}</strong><br>
-                    Text: ${message.text}<br>
-                    Personal Chat Link: <a href="${message.personal_chat_link}">${message.personal_chat_link}</a>
-                </p>`;
-            
-            document.getElementById("messages").innerHTML += messageHtml;
-        };
-        
-        socket.onclose = function (event) {
-            document.getElementById("messages").innerHTML += "<p>Disconnected</p>";
-        };
-        
-        socket.onerror = function (error) {
-            document.getElementById("messages").innerHTML += "<p>Error: " + error.message + "</p>";
-        };
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIwNTk3NDA1LCJpYXQiOjE3MjA1MTEwMDUsImp0aSI6IjVmZDk3NmFmNzE2ZDQzNjJhNzFkOGVkMDFlN2QzNjBhIiwidXNlcl9pZCI6MjAsInVzZXJuYW1lIjoiYXZpdG8xMSJ9.A_kWE8ZlQcN8_ZS0IMvPMUt9x85qkjz2GfVef-LJzCM";
 
-        function sendMessage() {
-            const messageInput = document.getElementById("messageInput");
-            const message = messageInput.value;
-            if (message) {
-                console.log("Sending message:", message);
-                socket.send(JSON.stringify({message: message}));
-                messageInput.value = "";
+        {% comment %} const socket = new WebSocket(`ws://127.0.0.1:8000/ws/messages/?token=${token}`); {% endcomment %}
+        
+        class WebSocketClient {
+            constructor(url) {
+                this.url = url;
+                this.ws = null;
+                this.pingInterval = null;
+                this.pongTimeout = null;
+            }
+        
+            connect() {
+                this.ws = new WebSocket(this.url);
+        
+                this.ws.onopen = () => {
+                    console.log('WebSocket соединение установлено');
+                    this.startPingPong();
+                };
+        
+                this.ws.onmessage = (event) => {
+                    if (event.data === 'ping') {
+                        this.handlePing();
+                    } else {
+                        // Обработка других сообщений
+                        console.log('Получено сообщение:', event.data);
+                    }
+                };
+        
+                {% comment %} this.ws.onclose = () => {
+                    console.log('WebSocket соединение закрыто');
+                    this.stopPingPong();
+                }; {% endcomment %}
+        
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket ошибка:', error);
+                };
+            }
+        
+            startPingPong() {
+                this.pingInterval = setInterval(() => {
+                    if (this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send('pong');
+                    }
+                }, 50000);
+            }
+        
+            stopPingPong() {
+                clearInterval(this.pingInterval);
+                clearTimeout(this.pongTimeout);
+            }
+        
+            handlePing() {
+                if (this.ws.readyState === WebSocket.OPEN) {
+                    console.log('Получен ping, отправляем pong');
+                    this.ws.send('pong');
+                }
+        
+                // Устанавливаем таймаут на случай, если сервер не отвечает
+                clearTimeout(this.pongTimeout);
+                this.pongTimeout = setTimeout(() => {
+                    console.log('Сервер не отвечает, закрываем соединение');
+                    this.ws.close();
+                }, 70000);
+            }
+        
+            disconnect() {
+                if (this.ws) {
+                    this.ws.close();
+                }
+                this.stopPingPong();
             }
         }
+        const client = new WebSocketClient(`ws://127.0.0.1:8000/ws/messages/?token=${token}`);
+        client.connect();
+        
     </script>
 </body>
 </html>

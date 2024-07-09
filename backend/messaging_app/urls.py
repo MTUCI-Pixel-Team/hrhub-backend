@@ -12,4 +12,5 @@ urlpatterns = [
     path('unread/', views.UnreadMessageListView.as_view(), name='Message_unread'),
     path('avito_webhook/', csrf_exempt(views.avito_webhook), name='avito_webhook'),
     path('register_avito_webhook/', views.register_avito_webhook, name='register_avito_webhook'),
+    path('websocket-test/', views.WebSocketTestView.as_view(), name='websocket_test'),
 ]

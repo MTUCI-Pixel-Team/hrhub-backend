@@ -32,11 +32,14 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "hrhub.pixel-team.ru",
     "localhost",
+    "a3aa-147-45-40-23.ngrok-free.app",
 ]
 
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
+    "channels",
     "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -49,7 +52,6 @@ INSTALLED_APPS = [
     "user_app",
     "messaging_app",
     "services_app",
-    "channels",
 ]
 
 MIDDLEWARE = [
@@ -83,12 +85,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-ASGI_APPLICATION = 'backend.routing.application'
+ASGI_APPLICATION = "backend.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
-    }
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
 }
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
