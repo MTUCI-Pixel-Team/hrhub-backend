@@ -14,20 +14,8 @@ from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from user_app.models import User
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 from django.views.generic import TemplateView
-
-
-def send_message_to_user(user_id, message, type):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f"user_{user_id}",
-        {
-            "type": f"{type}_send_message",
-            "message": message,
-        }
-    )
+from utils.websocket.websocket_functions import send_message_to_user
 
 
 @extend_schema(tags=['Message'])
@@ -142,9 +130,10 @@ def avito_webhook(request):
 )
 def register_avito_webhook(request):
     user = request.user
-    token = get_object_or_404(ServiceAccount, user_id=user.id).access_token
+    token = get_object_or_404(ServiceAccount, user_id=user.id, service_name='Avito').access_token
     if user and token:
-        url = 'http://147.45.40.23:7000//api/message/avito_webhook/'
+        url = 'https://a3aa-147-45-40-23.ngrok-free.app/api/message/avito_webhook/'
+        # url = 'http://147.45.40.23:7000//api/message/avito_webhook/'
         response = set_webhook(token, url)
         return Response(response)
     else:

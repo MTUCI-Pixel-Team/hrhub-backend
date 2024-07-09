@@ -32,6 +32,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "hrhub.pixel-team.ru",
     "localhost",
+    "a3aa-147-45-40-23.ngrok-free.app",
 ]
 
 # Application definition
@@ -89,10 +90,7 @@ ASGI_APPLICATION = "backend.asgi.application"
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        'MIDDLEWARE': [
-            'django.contrib.auth.middleware.AuthenticationMiddleware',
-        ],
-    }
+    },
 }
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

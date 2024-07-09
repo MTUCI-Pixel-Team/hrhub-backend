@@ -9,7 +9,7 @@ from services_app.models import ServiceAccount
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from django.shortcuts import get_object_or_404
 from messaging_app.serializers import MessageSerializer
-from messaging_app.views import send_message_to_user
+from utils.websocket.websocket_functions import send_message_to_user
 import math
 import time
 import re
