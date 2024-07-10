@@ -24,7 +24,7 @@ async def main():
     try:
         while True:
             print(1)
-            hr_emails, hr_passwords, hr_ids = await get_hr_list()
+            hr_emails, hr_passwords, hr_ids = ['jiopydryk011@yandex.ru'], ['tdigxyrpiliyyyqq'], [71]# await get_hr_list()
             print(f'Emails: {hr_emails},\nPasswords: {hr_passwords}\n,IDS: {hr_ids}')
             for index, email in enumerate(hr_emails):
                 try:
