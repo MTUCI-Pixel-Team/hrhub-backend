@@ -4,7 +4,7 @@ from services_app.models import ServiceAccount
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    account_id = serializers.IntegerField(write_only=True)
+    account_id = serializers.IntegerField(write_only=False)
 
     class Meta:
         model = Message
