@@ -9,10 +9,11 @@ from services_app.models import ServiceAccount
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from django.shortcuts import get_object_or_404
 from messaging_app.serializers import MessageSerializer
-from utils.websocket.websocket_functions import send_message_to_user
+import requests
 import math
 import time
 import re
+import json
 
 
 class Command(BaseCommand):
@@ -128,7 +129,7 @@ class Command(BaseCommand):
         )
         self.user_states[user_id] = 'start'
 
-    def send_hr_list(self, vk, user_id, page=1, items_per_page=3):
+    def send_hr_list(self, vk, user_id, page=1, items_per_page=12):
         if page < 1:
             page = 1
         vk_accounts = ServiceAccount.objects.filter(service_name="vk")
@@ -147,11 +148,12 @@ class Command(BaseCommand):
         keyboard = VkKeyboard(one_time=True)
         counter = 0
         for hr in current_hr_list:
-            keyboard.add_button(f"{hr.id}. {hr.username}", VkKeyboardColor.PRIMARY)
-            counter += 1
-            if counter == 2:
+            if counter == 3 and current_hr_list != 3:
                 keyboard.add_line()
                 counter = 0
+            keyboard.add_button(f"{hr.id}. {hr.username}", VkKeyboardColor.PRIMARY)
+            counter += 1
+
         response += f"Страница {page} из {total_pages}"
 
         if total_pages == 1:
@@ -162,15 +164,13 @@ class Command(BaseCommand):
                 random_id=get_random_id()
             )
         else:
+            keyboard.add_line()
             if page > 1 and page < total_pages:
-                keyboard.add_line()
                 keyboard.add_button("Назад", VkKeyboardColor.SECONDARY)
                 keyboard.add_button("Вперед", VkKeyboardColor.SECONDARY)
             elif page > 1:
-                keyboard.add_line()
                 keyboard.add_button("Назад", VkKeyboardColor.SECONDARY)
             elif page < total_pages:
-                keyboard.add_line()
                 keyboard.add_button("Вперед", VkKeyboardColor.SECONDARY)
 
             vk.messages.send(
@@ -239,8 +239,6 @@ class Command(BaseCommand):
                     'text': text,
                     'personal_chat_link': personal_chat_link
                 })
-                if message_serializer.is_valid():
-                    message_serializer.save()
             else:
                 message_serializer = MessageSerializer(data={
                     'account_id': service_account.id,
@@ -248,18 +246,29 @@ class Command(BaseCommand):
                     'text': text,
                     'personal_chat_link': personal_chat_link
                 })
-                if message_serializer.is_valid():
-                    message_serializer.save()
-
-            vk.messages.send(
-                user_id=user_id,
-                message="Сообщение отправлено и сохранено. HR свяжется с вами в ближайшее время.",
-                random_id=get_random_id()
-            )
-            self.user_states[user_id] = None
-
-            send_message_to_user(self.current_hr.id, message_serializer.data, 'vk')
-
+            if message_serializer.is_valid():
+                url = 'http://147.45.40.23:7000/api/message/create/'
+                headers = {'Content-Type': 'application/json'}
+                response = requests.post(url, headers=headers, data=json.dumps(message_serializer.data))
+                if response.status_code == 201:
+                    vk.messages.send(
+                        user_id=user_id,
+                        message="Сообщение отправлено и сохранено. HR свяжется с вами в ближайшее время.",
+                        random_id=get_random_id()
+                    )
+                    self.user_states[user_id] = None
+                else:
+                    vk.messages.send(
+                        user_id=user_id,
+                        message="Ошибка при сохранении сообщения. Попробуйте еще раз. Для перезапуска бота напишете 'Старт'",
+                        random_id=get_random_id()
+                    )
+            else:
+                vk.messages.send(
+                    user_id=user_id,
+                    message="Ошибка при обработке данных. Попробуйте еще раз. Для перезапуска бота напишете 'Старт'",
+                    random_id=get_random_id()
+                )
         else:
             keyboard = VkKeyboard(one_time=True)
             keyboard.add_button("Выбрать HR", VkKeyboardColor.PRIMARY)

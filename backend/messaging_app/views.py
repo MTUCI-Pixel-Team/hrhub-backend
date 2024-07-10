@@ -133,7 +133,7 @@ def register_avito_webhook(request):
     user = request.user
     token = get_object_or_404(ServiceAccount, user_id=user.id, service_name='Avito').access_token
     if user and token:
-        url = 'http://147.45.40.23:7000//api/message/avito_webhook/'
+        url = 'https://hrhub.pixel-team.ru/api/message/avito_webhook/'
         response = set_webhook(token, url)
         return Response(response)
     else:
