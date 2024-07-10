@@ -42,4 +42,7 @@ async def main():
         print('Необработанная ошибка:', e)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except BaseException as e:
+        print('Ошибка', e)
