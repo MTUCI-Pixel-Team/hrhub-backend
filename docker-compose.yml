@@ -40,7 +40,7 @@ services:
         volumes:
             - ./backend:/backend
         command: >
-            sh -c "python parserMailYandex/main.py"
+            sh -c "sleep 10 && python parserMailYandex/main.py"
     vk_bot:
         user: root
         build:
