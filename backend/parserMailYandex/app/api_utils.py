@@ -30,6 +30,7 @@ async def get_hr_list():
                             [hr['id'] for hr in hrs_data]]
                 return None
     except BaseException as e:
+        print(response)
         print('Ошибка при получении данных:', e)
 
 
