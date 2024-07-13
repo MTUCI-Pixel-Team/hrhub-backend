@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
+from .models import CustomUser, MembersOfGroup
 
 User = get_user_model()
 
@@ -33,3 +34,19 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['username'] = user.username
         return token
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'user', 'group_name', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class MembersOfGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MembersOfGroup
+        fields = ['id', 'user_name_from_message', 'group', 'created_at']
+        read_only_fields = ['id', 'created_at']
