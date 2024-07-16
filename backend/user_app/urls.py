@@ -10,5 +10,4 @@ urlpatterns = [
     path('update-user/', views.ManageUserView.as_view(), name='update'),
     path('custom-user/', views.CustomUserView.as_view(), name='custom_user'),
     path('custom-user/<int:group_id>', views.ManageCustomUserView.as_view(), name='manage_custom_user'),
-    path('manage-custom-user-group/<int:group_id>/<int:member_id>', views.ManageCustomUserGroupView.as_view(), name='manage_custom_user_group'),
 ]
