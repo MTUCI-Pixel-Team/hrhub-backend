@@ -2,7 +2,9 @@ from rest_framework import generics, permissions, status
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from .models import User, CustomUser, MembersOfGroup
-from .serializers import UserSerializer, MyTokenObtainPairSerializer, CustomUserSerializer, MembersOfGroupSerializer
+from messaging_app.models import Message
+from services_app.models import ServiceAccount
+from .serializers import UserSerializer, MyTokenObtainPairSerializer, CustomUserSerializer, MembersOfGroupSerializer, UserUpdateSchema
 from rest_framework.generics import GenericAPIView
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
@@ -63,10 +65,32 @@ class CustomUserView(GenericAPIView):
         serializer = self.get_serializer(data={
             'user': request.user.id,
             'group_name': request.data.get('group_name'),
+            'profession': request.data.get('profession'),
         })
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=201)
+            custom_user = CustomUser.objects.get(id=serializer.data['id'])
+
+            accounts = ServiceAccount.objects.filter(user_id=request.user.id)
+            unique_usernames_and_urls = Message.objects.filter(account__in=accounts).values('account__service_name', 'from_username', 'personal_chat_link').distinct()
+            members_of_group_serializer = MembersOfGroupSerializer()
+            response_data = serializer.data.copy()
+            data = []
+            for items in unique_usernames_and_urls:
+                member_data = {
+                    'group': custom_user.id,
+                    'user_name_from_message': items['from_username'],
+                    'service_name': items['account__service_name'],
+                    'chat_link': items['personal_chat_link'],
+                }
+                members_of_group_serializer = MembersOfGroupSerializer(data=member_data)
+                if members_of_group_serializer.is_valid():
+                    member = members_of_group_serializer.save()
+                    data.append(MembersOfGroupSerializer(member).data)
+                else:
+                    return Response(members_of_group_serializer.errors, status=400)
+            response_data['members'] = data
+            return Response(response_data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=400)
 
@@ -87,22 +111,23 @@ class CustomUserView(GenericAPIView):
             members_of_group_serializer = MembersOfGroupSerializer(members_of_group, many=True)
             data['members'] = members_of_group_serializer.data
             response_data.append(data)
-        return Response(response_data, status=200)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=['User'])
 class ManageCustomUserView(GenericAPIView):
-    serializer_class = CustomUserSerializer
+    serializer_class = UserUpdateSchema
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
-        description="Обновление кастомного пользователя",
+        description="Добавление и удаление людей, входящих в группу кастомного пользователя."
+        "Необходимо передать массив из словарей, которые содержат id пользователей внутри группы и флаги true/false",
         parameters=[
             OpenApiParameter(name='group_id', type=int, location=OpenApiParameter.PATH, description="ID группы для обновления")
         ],
-        request=CustomUserSerializer,
+        request=UserUpdateSchema,
         responses={
-            status.HTTP_200_OK: CustomUserSerializer,
+            status.HTTP_200_OK: MembersOfGroupSerializer,
             status.HTTP_400_BAD_REQUEST: OpenApiResponse(description="Неверные данные"),
             status.HTTP_403_FORBIDDEN: OpenApiResponse(description="Нет прав для выполнения операции"),
             status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Кастомный пользователь не найден")
@@ -110,15 +135,24 @@ class ManageCustomUserView(GenericAPIView):
         summary="Обновление кастомного пользователя",
     )
     def patch(self, request, group_id, *args, **kwargs):
-        custom_user = CustomUser.objects.get(user=request.user, id=group_id)
+        custom_user = CustomUser.objects.get(id=group_id)
         if not custom_user:
-            return Response({'error': 'Custom user not found'}, status=404)
-        serializer = self.get_serializer(data=request.data, instance=custom_user)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=200)
-        else:
-            return Response(serializer.errors)
+            return Response({'error': 'Custom user not found'}, status=status.HTTP_404_NOT_FOUND)
+        if custom_user.user != request.user:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        response_data = []
+        for key, value in request.data.items():
+            if key.isdigit() and value in [True, False]:
+                try:
+                    member = MembersOfGroup.objects.get(id=key, group=custom_user)
+                    member.added = value
+                    member.save()
+                    response_data.append(MembersOfGroupSerializer(member).data)
+                except MembersOfGroup.DoesNotExist:
+                    return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(response_data, status=status.HTTP_200_OK)
 
     @extend_schema(
         description="Удаление кастомного пользователя",
@@ -126,90 +160,17 @@ class ManageCustomUserView(GenericAPIView):
             OpenApiParameter(name='group_id', type=int, location=OpenApiParameter.PATH, description="ID группы для удаления")
         ],
         responses={
-            status.HTTP_204_NO_CONTENT: OpenApiResponse(description="Кастомный пользователь успешно удален"),
-            status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Кастомный пользователь не найден"),
+            status.HTTP_204_NO_CONTENT: OpenApiResponse(description="Участники удалены"),
             status.HTTP_403_FORBIDDEN: OpenApiResponse(description="Нет прав для выполнения операции"),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Кастомный пользователь не найден")
         },
         summary="Удаление кастомного пользователя",
     )
     def delete(self, request, group_id, *args, **kwargs):
-        custom_user = CustomUser.objects.get(user=request.user, id=group_id)
+        custom_user = CustomUser.objects.get(id=group_id)
         if not custom_user:
-            return Response({'error': 'Custom user not found'}, status=404)
+            return Response({'error': 'Custom user not found'}, status=status.HTTP_404_NOT_FOUND)
+        if custom_user.user != request.user:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         custom_user.delete()
-        return Response({'success': 'Custom user deleted'}, status=200)
-
-    @extend_schema(
-        description="Добавление username в группу кастомного пользователя",
-        request={"id": "int", "user_name_from_message": "str"},
-        responses={
-            status.HTTP_201_CREATED: OpenApiResponse(description="Пользователь успешно добавлен в группу"),
-            status.HTTP_400_BAD_REQUEST: OpenApiResponse(description="Неверные данные"),
-            status.HTTP_403_FORBIDDEN: OpenApiResponse(description="Нет прав для выполнения операции"),
-            status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Группа или пользователь не найдены"),
-        },
-        summary="Добавление username в группу кастомного пользователя",
-    )
-    def post(self, request, group_id, *args, **kwargs):
-        custom_user = CustomUser.objects.get(user=request.user.id, id=group_id)
-        if not custom_user:
-            return Response({'error': 'Custom user not found'}, status=404)
-        serializer = MembersOfGroupSerializer(data={
-            'group': custom_user.id,
-            'user_name_from_message': request.data.get('user_name_from_message'),
-        })
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@extend_schema(tags=['User'])
-class ManageCustomUserGroupView(GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = MembersOfGroupSerializer
-
-    @extend_schema(
-        description="Удаление пользователя из группы кастомного пользователя",
-        parameters=[
-            OpenApiParameter(name='group_id', type=int, location=OpenApiParameter.PATH, description="ID группы кастомного пользователя"),
-            OpenApiParameter(name='member_id', type=int, location=OpenApiParameter.PATH, description="ID члена группы для удаления"),
-        ],
-        responses={
-            status.HTTP_204_NO_CONTENT: OpenApiResponse(description="Пользователь успешно удален из группы"),
-            status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Группа или пользователь не найдены"),
-            status.HTTP_403_FORBIDDEN: OpenApiResponse(description="Нет прав для выполнения операции"),
-        },
-        summary="Удаление пользователя из группы",
-    )
-    def delete(self, request, group_id, member_id, *args, **kwargs):
-        custom_user = get_object_or_404(CustomUser, id=group_id, user=request.user)
-        member = get_object_or_404(MembersOfGroup, id=member_id, group=custom_user)
-        member.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @extend_schema(
-        description="Обновление информации о пользователе в группе кастомного пользователя",
-        parameters=[
-            OpenApiParameter(name='group_id', type=int, location=OpenApiParameter.PATH, description="ID группы кастомного пользователя"),
-            OpenApiParameter(name='member_id', type=int, location=OpenApiParameter.PATH, description="ID члена группы для обновления"),
-        ],
-        request=MembersOfGroupSerializer,
-        responses={
-            status.HTTP_200_OK: MembersOfGroupSerializer,
-            status.HTTP_400_BAD_REQUEST: OpenApiResponse(description="Неверные данные"),
-            status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Группа или пользователь не найдены"),
-            status.HTTP_403_FORBIDDEN: OpenApiResponse(description="Нет прав для выполнения операции"),
-        },
-        summary="Обновление информации о пользователе в группе",
-    )
-    def put(self, request, group_id, member_id, *args, **kwargs):
-        custom_user = get_object_or_404(CustomUser, id=group_id, user=request.user)
-        member = get_object_or_404(MembersOfGroup, id=member_id, group=custom_user)
-
-        serializer = self.get_serializer(member, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Members deleted'}, status=status.HTTP_204_NO_CONTENT)

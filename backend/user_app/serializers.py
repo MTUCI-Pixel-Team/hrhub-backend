@@ -41,12 +41,18 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'user', 'group_name', 'created_at']
+        fields = ['id', 'user', 'profession', 'group_name', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
 class MembersOfGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = MembersOfGroup
-        fields = ['id', 'user_name_from_message', 'group', 'created_at']
+        fields = ['id', 'group', 'user_name_from_message', 'service_name', 'chat_link', 'created_at', 'added']
         read_only_fields = ['id', 'created_at']
+
+
+class UserUpdateSchema(serializers.Serializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['{id}'] = serializers.BooleanField(help_text="ID пользователя и флаг true/false")
