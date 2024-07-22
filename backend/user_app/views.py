@@ -193,6 +193,19 @@ class ManageCustomUserView(GenericAPIView):
         custom_user.delete()
         return Response({'message': 'Members deleted'}, status=status.HTTP_204_NO_CONTENT)
 
+    @extend_schema(
+        description="Получение членов группы кастомного пользователя",
+        responses={200: MembersOfGroupSerializer},
+        summary="Получение членов группы кастомного пользователя",
+    )
+    def get(self, request, group_id, *args, **kwargs):
+        custom_user = get_object_or_404(CustomUser, id=group_id)
+        if custom_user.user != request.user:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        members_of_custom_user = MembersOfGroup.objects.filter(group=custom_user)
+        members_serializer = MembersOfGroupSerializer(members_of_custom_user, many=True)
+        return Response(members_serializer.data, status=status.HTTP_200_OK)
+
 
 @extend_schema(tags=['User'])
 class GetUsernamesFromMessages(GenericAPIView):
