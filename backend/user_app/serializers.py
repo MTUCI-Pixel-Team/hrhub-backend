@@ -36,12 +36,21 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 
+class UsernameAndServiceSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    service = serializers.CharField()
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    usernames_and_services = serializers.ListField(
+        child=UsernameAndServiceSerializer(),
+        required=False
+        )
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'user', 'profession', 'group_name', 'created_at']
+        fields = ['id', 'user', 'profession', 'group_name', 'created_at', 'usernames_and_services']
         read_only_fields = ['id', 'created_at']
 
 
@@ -53,6 +62,9 @@ class MembersOfGroupSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSchema(serializers.Serializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['{id}'] = serializers.BooleanField(help_text="ID пользователя и флаг true/false")
+    group_name = serializers.CharField(required=False, help_text="Новое название группы")
+    profession = serializers.CharField(required=False, help_text="Новая профессия")
+    members = serializers.DictField(child=serializers.BooleanField(), required=False, help_text="ID пользователей и флаги true/false")
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.fields['{id}'] = serializers.BooleanField(help_text="ID пользователя и флаг true/false")

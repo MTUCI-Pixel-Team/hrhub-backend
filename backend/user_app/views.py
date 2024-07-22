@@ -67,32 +67,39 @@ class CustomUserView(GenericAPIView):
             'group_name': request.data.get('group_name'),
             'profession': request.data.get('profession'),
         })
+        usernames_and_services = request.data.get('usernames_and_services')
         if serializer.is_valid():
             serializer.save()
             custom_user = CustomUser.objects.get(id=serializer.data['id'])
-
             accounts = ServiceAccount.objects.filter(user_id=request.user.id)
             unique_usernames_and_urls = Message.objects.filter(account__in=accounts).values('account__service_name', 'from_username', 'personal_chat_link').distinct()
             members_of_group_serializer = MembersOfGroupSerializer()
             response_data = serializer.data.copy()
             data = []
-            for items in unique_usernames_and_urls:
+            username_service_set = {(item['username'], item['service']) for item in usernames_and_services}
+            for item in unique_usernames_and_urls:
+                username = item['from_username']
+                service = item['account__service_name']
+
                 member_data = {
                     'group': custom_user.id,
-                    'user_name_from_message': items['from_username'],
-                    'service_name': items['account__service_name'],
-                    'chat_link': items['personal_chat_link'],
+                    'user_name_from_message': username,
+                    'service_name': service,
+                    'chat_link': item['personal_chat_link'],
+                    'added': (username, service) in username_service_set
                 }
+
                 members_of_group_serializer = MembersOfGroupSerializer(data=member_data)
                 if members_of_group_serializer.is_valid():
                     member = members_of_group_serializer.save()
                     data.append(MembersOfGroupSerializer(member).data)
                 else:
-                    return Response(members_of_group_serializer.errors, status=400)
+                    return Response(members_of_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
             response_data['members'] = data
             return Response(response_data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         description="Получение всех кастомных пользователей и входящих в них username",
@@ -120,7 +127,7 @@ class ManageCustomUserView(GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
-        description="Добавление и удаление людей, входящих в группу кастомного пользователя."
+        description="Добавление и удаление людей, входящих в группу кастомного пользователя, а так же обновление названия группы и профессии."
         "Необходимо передать массив из словарей, которые содержат id пользователей внутри группы и флаги true/false",
         parameters=[
             OpenApiParameter(name='group_id', type=int, location=OpenApiParameter.PATH, description="ID группы для обновления")
@@ -135,23 +142,34 @@ class ManageCustomUserView(GenericAPIView):
         summary="Обновление кастомного пользователя",
     )
     def patch(self, request, group_id, *args, **kwargs):
-        custom_user = CustomUser.objects.get(id=group_id)
-        if not custom_user:
+        try:
+            custom_user = CustomUser.objects.get(id=group_id)
+        except CustomUser.DoesNotExist:
             return Response({'error': 'Custom user not found'}, status=status.HTTP_404_NOT_FOUND)
         if custom_user.user != request.user:
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-        response_data = []
-        for key, value in request.data.items():
-            if key.isdigit() and value in [True, False]:
-                try:
-                    member = MembersOfGroup.objects.get(id=key, group=custom_user)
-                    member.added = value
-                    member.save()
-                    response_data.append(MembersOfGroupSerializer(member).data)
-                except MembersOfGroup.DoesNotExist:
-                    return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
-            else:
-                return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+        if 'group_name' in request.data:
+            custom_user.group_name = request.data['group_name']
+        if 'profession' in request.data:
+            custom_user.profession = request.data['profession']
+        custom_user.save()
+
+        members_data = request.data.get('members', {})
+        for member_id, is_added in members_data.items():
+            if not isinstance(is_added, bool):
+                return Response({'error': 'Invalid data for members'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                member = MembersOfGroup.objects.get(id=member_id, group=custom_user)
+                member.added = is_added
+                member.save()
+            except MembersOfGroup.DoesNotExist:
+                return Response({'error': f'Member with id {member_id} not found'}, status=status.HTTP_404_NOT_FOUND)
+        updated_custom_user = CustomUser.objects.get(id=group_id)
+        members_of_custom_user = MembersOfGroup.objects.filter(group=updated_custom_user)
+        custom_user_serializer = CustomUserSerializer(updated_custom_user)
+        members_serializer = MembersOfGroupSerializer(members_of_custom_user, many=True)
+        response_data = custom_user_serializer.data.copy()
+        response_data['members'] = members_serializer.data
         return Response(response_data, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -174,3 +192,28 @@ class ManageCustomUserView(GenericAPIView):
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         custom_user.delete()
         return Response({'message': 'Members deleted'}, status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=['User'])
+class GetUsernamesFromMessages(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        description="Получение всех возможных username и их сервисов, которые можно объединить в группу",
+        responses={200: MembersOfGroupSerializer},
+        summary="Получение всех возможных username и их сервисов, которые можно объединить в группу",
+    )
+    def get(self, request):
+        accounts = ServiceAccount.objects.filter(user_id=request.user.id)
+        if not accounts:
+            return Response([], status=status.HTTP_200_OK)
+        unique_usernames = Message.objects.filter(account__in=accounts).values('account__service_name', 'from_username', 'personal_chat_link').distinct()
+        data = []
+        for items in unique_usernames:
+            member_data = {
+                'user_name_from_message': items['from_username'],
+                'service_name': items['account__service_name'],
+                'chat_link': items['personal_chat_link'],
+            }
+            data.append(member_data)
+        return Response(data, status=status.HTTP_200_OK)
