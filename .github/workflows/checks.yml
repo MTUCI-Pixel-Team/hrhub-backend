@@ -38,4 +38,4 @@ jobs:
                   ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
             - name: Deploy to Server
               run: |
-                  ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /home/hr-hub/hrhub-backend && git pull && docker-compose down && docker-compose up --build -d"
+                  ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /home/deploy/Shopix-BackEnd && git pull && docker-compose down && docker-compose up --build -d"
