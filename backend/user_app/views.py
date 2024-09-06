@@ -180,6 +180,48 @@ class ManageCustomUserView(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
     @extend_schema(
+        description="Добавление и удаление людей, входящих в группу кастомного пользователя, а так же обновление названия группы и профессии."
+        "Необходимо передать массив из словарей, которые содержат id пользователей внутри группы. Переданные пользователи будут добавлены в группу, а остальные удалены",
+        parameters=[
+            OpenApiParameter(name='group_id', type=int, location=OpenApiParameter.PATH, description="ID группы для обновления")
+        ],
+        request=UserUpdateSchema,
+        responses={
+            status.HTTP_200_OK: MembersOfGroupSerializer,
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(description="Неверные данные"),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(description="Нет прав для выполнения операции"),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Кастомный пользователь не найден")
+        },
+        summary="Полное обновление кастомного пользователя",
+    )
+    def put(self, request, group_id, *args, **kwargs):
+        try:
+            custom_user = CustomUser.objects.get(id=group_id)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'Custom user not found'}, status=status.HTTP_404_NOT_FOUND)
+        if custom_user.user != request.user:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        if 'group_name' in request.data:
+            custom_user.group_name = request.data['group_name']
+        if 'profession' in request.data:
+            custom_user.profession = request.data['profession']
+        custom_user.save()
+
+        new_member_ids = set(int(id) for id in request.data.get('members', []))
+
+        existing_members = MembersOfGroup.objects.filter(group=custom_user)
+        for member in existing_members:
+            member.added = member.id in new_member_ids
+            member.save()
+        updated_custom_user = CustomUser.objects.get(id=group_id)
+        members_of_custom_user = MembersOfGroup.objects.filter(group=updated_custom_user)
+        custom_user_serializer = CustomUserSerializer(updated_custom_user)
+        members_serializer = MembersOfGroupSerializer(members_of_custom_user, many=True)
+        response_data = custom_user_serializer.data.copy()
+        response_data['members'] = members_serializer.data
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    @extend_schema(
         description="Удаление кастомного пользователя",
         parameters=[
             OpenApiParameter(name='group_id', type=int, location=OpenApiParameter.PATH, description="ID группы для удаления")
