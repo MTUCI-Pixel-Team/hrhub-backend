@@ -109,15 +109,22 @@ class CustomUserView(GenericAPIView):
     def get(self, request, *args, **kwargs):
         custom_users = CustomUser.objects.filter(user=request.user)
         if not custom_users:
-            return Response([], status=200)
-        response_data = []
-        for user in custom_users:
-            serializer = self.get_serializer(user)
-            data = serializer.data.copy()
-            members_of_group = MembersOfGroup.objects.filter(group=user)
+            return Response([], status=status.HTTP_200_OK)
+
+        page = self.paginate_queryset(custom_users)
+        if page is None:
+            page = custom_users
+
+        serializer = self.get_serializer(page, many=True)
+        response_data = serializer.data
+
+        for data in response_data:
+            members_of_group = MembersOfGroup.objects.filter(group_id=data['id'])
             members_of_group_serializer = MembersOfGroupSerializer(members_of_group, many=True)
             data['members'] = members_of_group_serializer.data
-            response_data.append(data)
+
+        if self.paginator:
+            return self.get_paginated_response(response_data)
         return Response(response_data, status=status.HTTP_200_OK)
 
 
@@ -222,11 +229,14 @@ class GetUsernamesFromMessages(GenericAPIView):
             return Response([], status=status.HTTP_200_OK)
         unique_usernames = Message.objects.filter(account__in=accounts).values('account__service_name', 'from_username', 'personal_chat_link').distinct()
         data = []
+        index = 0
         for items in unique_usernames:
             member_data = {
-                'user_name_from_message': items['from_username'],
+                'id': index,
+                'username_from_message': items['from_username'],
                 'service_name': items['account__service_name'],
                 'chat_link': items['personal_chat_link'],
             }
+            index += 1
             data.append(member_data)
         return Response(data, status=status.HTTP_200_OK)
