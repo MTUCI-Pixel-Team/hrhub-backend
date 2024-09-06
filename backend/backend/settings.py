@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     "147.45.40.23",
+    "193.233.114.35",
     "95.220.5.105",
     "127.0.0.1",
     "hrhub.pixel-team.ru",
