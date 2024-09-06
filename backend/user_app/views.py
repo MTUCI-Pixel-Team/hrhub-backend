@@ -211,7 +211,14 @@ class ManageCustomUserView(GenericAPIView):
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         members_of_custom_user = MembersOfGroup.objects.filter(group=custom_user)
         members_serializer = MembersOfGroupSerializer(members_of_custom_user, many=True)
-        return Response(members_serializer.data, status=status.HTTP_200_OK)
+        response_data = {
+            'id': custom_user.id,
+            'group_name': custom_user.group_name,
+            'profession': custom_user.profession,
+            'created_at': custom_user.created_at,
+            'members': members_serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=['User'])
