@@ -212,11 +212,11 @@ class ManageCustomUserView(GenericAPIView):
         members_of_custom_user = MembersOfGroup.objects.filter(group=custom_user)
         members_serializer = MembersOfGroupSerializer(members_of_custom_user, many=True)
         response_data = {
-            'id' : custom_user.id,
+            'id': custom_user.id,
             'group_name': custom_user.group_name,
             'profession': custom_user.profession,
             'created_at': custom_user.created_at,
-            'members'   : members_serializer.data
+            'members': members_serializer.data
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
