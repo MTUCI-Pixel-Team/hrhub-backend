@@ -247,7 +247,7 @@ class Command(BaseCommand):
                     'personal_chat_link': personal_chat_link
                 })
             if message_serializer.is_valid():
-                url = 'http://147.45.40.23:7000/api/message/create/'
+                url = 'http://193.233.114.35:7000/api/message/create/'
                 headers = {'Content-Type': 'application/json'}
                 response = requests.post(url, headers=headers, data=json.dumps(message_serializer.data))
                 if response.status_code == 201:
