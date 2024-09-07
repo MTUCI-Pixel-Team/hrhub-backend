@@ -51,7 +51,7 @@ class MessageListView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Message.objects.filter(account__user_id=user.id)
+        return Message.objects.filter(account__user_id=user.id).order_by('-received_at')
 
 
 @extend_schema(tags=['Message'])
