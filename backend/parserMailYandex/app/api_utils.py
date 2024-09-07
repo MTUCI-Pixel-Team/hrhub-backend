@@ -22,7 +22,7 @@ async def get_hr_list():
     """
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get('http://147.45.40.23:7000/api/service/list_yandex_mail/') as response:
+            async with session.get('http://193.233.114.35:7000/api/service/list_yandex_mail/') as response:
                 if response.status == 200:
                     hrs_data = await response.json()
                     return [[hr['email'] for hr in hrs_data],
@@ -130,7 +130,7 @@ async def info_to_db(info_about_message):
     }
 
     async with aiohttp.ClientSession() as session:
-        url = 'http://147.45.40.23:7000/api/message/create/'
+        url = 'http://193.233.114.35:7000/api/message/create/'
         headers = {'Content-Type': 'application/json'}
         async with session.post(url, data=json.dumps(data), headers=headers) as response:
             response_text = await response.text()
