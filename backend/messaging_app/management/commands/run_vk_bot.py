@@ -208,7 +208,7 @@ class Command(BaseCommand):
                 if message_serializer.is_valid():
                     url = 'http://193.233.114.35:7000/api/message/create/'
                     headers = {'Content-Type': 'application/json'}
-                    response = requests.post(url, headers=headers, data=json.dumps(message_serializer.data))
+                    requests.post(url, headers=headers, data=json.dumps(message_serializer.data))
 
         except User.DoesNotExist:
             vk.messages.send(

@@ -31,10 +31,10 @@ async def main():
                     if re.match(PATTERN_YANDEX_EMAIL, email) is None:
                         raise NotYandexMailException('Неверный формат почты')
                 except NotYandexMailException as e:
-                    # print(e, f'Название почты: {email}')
+                    print(e, f'Название почты: {email}')
                     continue
                 # HR_EMAILS[index] - тоже самое, что email, но для единой структуры пишу так
-                result = await read_incoming_emails(hr_emails[index], hr_passwords[index], hr_ids[index])
+                await read_incoming_emails(hr_emails[index], hr_passwords[index], hr_ids[index])
 
             await asyncio.sleep(10)  # Пауза перед следующей итерацией
     # Обработка всех непредвиденных ошибок

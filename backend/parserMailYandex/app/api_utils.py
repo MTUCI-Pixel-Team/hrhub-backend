@@ -79,7 +79,6 @@ async def read_incoming_emails(email_user, email_password, hr_id):
             message_info['subject'] = decode_mime_header(subject)
             message_info['username'] = decode_mime_header(username)
             message_info['email'] = from_[1].replace('>', '').strip('\r\n')
-            
             if msg.is_multipart():
                 for part in msg.walk():
                     # Проверяем, что это часть с нужным контентом (HTML или plain text)
