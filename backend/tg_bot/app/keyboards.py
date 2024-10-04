@@ -2,10 +2,9 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 import aiohttp
 
 
-# Изменение в get_specialists_keyboard
 async def get_specialists_keyboard():
     async with aiohttp.ClientSession() as session:
-        async with session.get('http://147.45.40.23:7000/api/service/list_tg/') as response:
+        async with session.get('http://193.233.114.35:7000/api/service/list_tg/') as response:
             if response.status == 200:
                 specialists = await response.json()
                 keyboard = [[KeyboardButton(text=f"{specialist['service_username']} (ID: {specialist['id']})")] for

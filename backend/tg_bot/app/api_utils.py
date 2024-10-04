@@ -24,7 +24,7 @@ async def send_message_to_db(info_about_user):
     }
 
     async with aiohttp.ClientSession() as session:
-        url = 'http://147.45.40.23:7000/api/message/create/'
+        url = 'http://193.233.114.35:7000/api/message/create/'
         headers = {'Content-Type': 'application/json'}
         async with session.post(url, data=json.dumps(data), headers=headers) as response:
             response_text = await response.text()
