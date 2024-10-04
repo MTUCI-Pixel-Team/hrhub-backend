@@ -44,7 +44,6 @@ async def contact_received(message: Message):
     custom_text = "Потенциальный сотрудник откликнулся на ваше объявление и предоставил свой номер телефона"
     info_about_user_with_phone = get_info_about_user(
         message, contact=True, text=custom_text)
-    print(info_about_user_with_phone)
     await send_message_to_db(info_about_user_with_phone)
     await message.answer(f"Спасибо, {info_about_user_with_phone['name']}! Мы получили ваш контакт. HR-специалист "
                          f"свяжется с вами в ближайшее время. Можете отправить дополнительную информацию о себе, "

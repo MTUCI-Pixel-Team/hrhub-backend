@@ -195,6 +195,20 @@ class Command(BaseCommand):
                 random_id=get_random_id()
             )
             self.user_states[user_id] = "choose_phone or write_message"
+            service_account = get_object_or_404(ServiceAccount, user_id=self.current_hr, service_name="vk")
+            from_username = vk.users.get(user_ids=user_id)[0]["first_name"]
+            personal_chat_link = f"https://vk.com/id{user_id}"
+            if self.current_hr is not None:
+                message_serializer = MessageSerializer(data={
+                    'account_id': service_account.id,
+                    'from_username': from_username,
+                    'text': "Потенциальный сотрудник откликнулся на ваше объявление",
+                    'personal_chat_link': personal_chat_link
+                })
+                if message_serializer.is_valid():
+                    url = 'http://193.233.114.35:7000/api/message/create/'
+                    headers = {'Content-Type': 'application/json'}
+                    response = requests.post(url, headers=headers, data=json.dumps(message_serializer.data))
 
         except User.DoesNotExist:
             vk.messages.send(

@@ -50,7 +50,7 @@ async def read_incoming_emails(email_user, email_password, hr_id):
         except imaplib.IMAP4.error:
             return 'Ошибка авторизации'
         # Папка "Входящие"
-        mail.select('inbox')
+        mail.select('INBOX')
 
         response_data = []
         # Непрочитанные сообщения
@@ -76,26 +76,27 @@ async def read_incoming_emails(email_user, email_password, hr_id):
                 username = ''.join(part[0].decode(part[1] or 'ascii') for part in byte_username)
 
             message_info['hr_id'] = hr_id
-            message_info['subject'] = subject
-            message_info['username'] = username
+            message_info['subject'] = decode_mime_header(subject)
+            message_info['username'] = decode_mime_header(username)
             message_info['email'] = from_[1].replace('>', '').strip('\r\n')
-
-            # Если сообщение многочастное, получаем тело сообщения
+            
             if msg.is_multipart():
                 for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
-                        body = part.get_payload(decode=True).decode()
-                        try:
-                            if 'text' not in message_info:
-                                message_info['text'] = body
-                            else:
-                                raise MailTextException('Сообщение содержит несколько текстовых частей')
-                        except MailTextException as e:
-                            print(e)
-                            # Переходим к следующей итерации цикла т,к в этой не получится отдать данные в нормальном виде
-                            continue
+                    # Проверяем, что это часть с нужным контентом (HTML или plain text)
+                    content_type = part.get_content_type()
+                    content_disposition = str(part.get("Content-Disposition"))
+                    if "attachment" not in content_disposition:
+                        # Получаем только части с текстом (HTML или Plain text)
+                        if content_type == "text/plain" or content_type == "text/html":
+                            # Декодируем и возвращаем содержимое
+                            payload = part.get_payload(decode=True)
+                            body = payload.decode(part.get_content_charset() or 'utf-8')
+                            message_info['text'] = body
             else:
-                print('Сообщение не удалось декодировать')
+                # Если письмо не multipart
+                payload = msg.get_payload(decode=True)
+                body = payload.decode(msg.get_content_charset() or 'utf-8')
+                message_info['text'] = body.replace("</div>", " ", -1).replace("<div>", " ", -1)
             # Добавляем текст в данные, которые будем передавать
             try:
                 if 'text' not in message_info:
@@ -114,6 +115,18 @@ async def read_incoming_emails(email_user, email_password, hr_id):
             return 'Новых писем нет'
     except BaseException as e:
         print('Ошибка при получении данных:', e)
+
+
+# Функция для декодирования заголовков
+def decode_mime_header(header_value):
+    decoded_parts = decode_header(header_value)
+    decoded_header = ''
+    for part, encoding in decoded_parts:
+        if isinstance(part, bytes):
+            decoded_header += part.decode(encoding or 'utf-8')
+        else:
+            decoded_header += part
+    return decoded_header
 
 
 async def info_to_db(info_about_message):

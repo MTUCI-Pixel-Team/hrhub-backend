@@ -21,19 +21,21 @@ async def main():
         После этого функция вызывает функцию read_incoming_emails для каждого HR-а
         И сохранит в БД список непрочитанных сообщений, которые были отправлены HR-у
     """
+    await asyncio.sleep(15)
     try:
         while True:
             hr_emails, hr_passwords, hr_ids = await get_hr_list()
-            print(f'Emails: {hr_emails},\nPasswords: {hr_passwords}\n,IDS: {hr_ids}')
+            # print(f'Emails: {hr_emails},\nPasswords: {hr_passwords}\n,IDS: {hr_ids}')
             for index, email in enumerate(hr_emails):
                 try:
                     if re.match(PATTERN_YANDEX_EMAIL, email) is None:
                         raise NotYandexMailException('Неверный формат почты')
                 except NotYandexMailException as e:
-                    print(e, f'Название почты: {email}')
+                    # print(e, f'Название почты: {email}')
                     continue
                 # HR_EMAILS[index] - тоже самое, что email, но для единой структуры пишу так
-                await read_incoming_emails(hr_emails[index], hr_passwords[index], hr_ids[index])
+                result = await read_incoming_emails(hr_emails[index], hr_passwords[index], hr_ids[index])
+
             await asyncio.sleep(10)  # Пауза перед следующей итерацией
     # Обработка всех непредвиденных ошибок
     except KeyboardInterrupt:
