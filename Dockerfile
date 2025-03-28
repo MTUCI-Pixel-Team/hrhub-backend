@@ -1,7 +1,7 @@
 FROM python:3.12.2-alpine3.19
 LABEL maintainer="hrhub.com"
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt

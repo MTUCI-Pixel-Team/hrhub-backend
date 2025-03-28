@@ -36,6 +36,26 @@ services:
         depends_on:
             - db
             - app
+    mail_yandex:
+        user: root
+        build:
+            context: .
+            args:
+                - DEV=true
+        volumes:
+            - ./backend:/backend
+        command: >
+            sh -c "sleep 10 && python parserMailYandex/main.py"
+    vk_bot:
+        user: root
+        build:
+            context: .
+            args:
+                - DEV=true
+        volumes:
+            - ./backend:/backend
+        command: >
+            sh -c "python manage.py run_vk_bot"
     db:
         image: postgres:15-alpine
         volumes:
@@ -47,3 +67,4 @@ services:
 
 volumes:
     postgres_data:
+    

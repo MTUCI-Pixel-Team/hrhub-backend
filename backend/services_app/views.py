@@ -2,10 +2,20 @@ from rest_framework import status
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from .models import ServiceAccount
-from .serializers import ServiceAccountSerializer
-from rest_framework.generics import GenericAPIView
+from .serializers import ServiceAccountSerializer, AvitoRegistrationSerializer
+from rest_framework.generics import GenericAPIView, ListAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import ListAPIView
+from django.conf import settings
+from utils.avito.avito_functions import (
+    get_tokens, get_user
+)
+
+
+# Константы для авито (потом надо будет пренести все в специальный файл)
+REDIRECT_URI = 'https://hrhub.pixel-team.ru/callback/avito'
+CLIENT_ID = settings.CLIENT_ID
+CLIENT_SECRET = settings.CLIENT_SECRET
+AUTHORIZATION_URL = f'https://www.avito.ru/oauth?response_type=code&client_id={CLIENT_ID}&scope=messenger:read,messenger:write,user:read'
 
 
 @extend_schema(tags=['ServiceAccount'])
@@ -14,7 +24,8 @@ class ServiceAccountCreateView(GenericAPIView):
     serializer_class = ServiceAccountSerializer
 
     def post(self, request, *args, **kwargs):
-        allowed_service_names = ['Telegram', 'WhatsApp', 'hh.ru', 'Avito', 'Instagram', 'Facebook', 'vk', 'Viber']
+        allowed_service_names = ['Telegram', 'WhatsApp', 'hh.ru',
+                                 'Avito', 'Instagram', 'Facebook', 'vk', 'Yandex Mail']
         service_name = request.data.get('service_name')
         if service_name not in allowed_service_names:
             return Response({"detail": f"Invalid service name. Allowed values are {', '.join(allowed_service_names)}."},
@@ -52,6 +63,40 @@ class TelegramServiceAccountListView(ListAPIView):
 
 
 @extend_schema(tags=['ServiceAccount'])
+class YandexMailServiceAccountListView(ListAPIView):
+    serializer_class = ServiceAccountSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return ServiceAccount.objects.filter(service_name='Yandex Mail')
+
+
+@extend_schema(tags=['ServiceAccount'])
+class VKServiceAccountListView(ListAPIView):
+    serializer_class = ServiceAccountSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return ServiceAccount.objects.filter(service_name='vk')
+
+
+class ServiceAccountUpdateView(UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = ServiceAccount.objects.all()
+    serializer_class = ServiceAccountSerializer
+    lookup_field = 'id'
+
+
+@extend_schema(tags=['ServiceAccount'])
+class AvitoServiceAccountListView(ListAPIView):
+    serializer_class = ServiceAccountSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return ServiceAccount.objects.filter(service_name='Avito')
+
+
+@extend_schema(tags=['ServiceAccount'])
 class ServiceAccountDeleteView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
@@ -63,3 +108,49 @@ class ServiceAccountDeleteView(GenericAPIView):
         service_account = self.get_object()
         service_account.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=['ServiceAccount'])
+class AvitoRegistrationView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AvitoRegistrationSerializer
+
+    @extend_schema(
+        description="Получение URL для регистрации аккаунта Avito, нужен для получения authorization_code",
+        responses={200: AvitoRegistrationSerializer},
+        summary="Получение URL для регистрации аккаунта Avito",
+    )
+    def get(self, request):
+        return Response({"registration_url": AUTHORIZATION_URL}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        description="Регистрация аккаунта по authorization_code",
+        responses={200: ServiceAccountSerializer},
+        summary="Регистрация аккаунта Avito",
+    )
+    def post(self, request):
+        authorization_code = request.data.get('authorization_code')
+        service_username = request.data.get('service_username')
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            tokens = get_tokens(CLIENT_ID, CLIENT_SECRET, authorization_code)
+            if isinstance(tokens, int):
+                return Response({"detail": "Invalid authorization code."}, status=tokens)
+            user = get_user(tokens['access_token'], hr_id=request.user.id)
+            if isinstance(user, int):
+                return Response({"detail": "Invalid tokens."}, status=user)
+            service_account_serializer = ServiceAccountSerializer(data={
+                'service_name': 'Avito',
+                'service_user_id': user['id'],
+                'service_username': service_username,
+                'access_token': tokens['access_token'],
+                'refresh_token': tokens['refresh_token'],
+                'user_id': request.user.id
+            }, context={'request': request})
+
+            if service_account_serializer.is_valid(raise_exception=True):
+                service_account_serializer.save()
+            else:
+                return Response(service_account_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(service_account_serializer.data, status=status.HTTP_201_CREATED)

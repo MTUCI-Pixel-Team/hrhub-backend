@@ -2,7 +2,6 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 import aiohttp
 
 
-# Изменение в get_specialists_keyboard
 async def get_specialists_keyboard():
     async with aiohttp.ClientSession() as session:
         async with session.get(

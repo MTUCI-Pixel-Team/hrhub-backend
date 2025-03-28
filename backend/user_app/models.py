@@ -29,7 +29,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
     groups = models.ManyToManyField(Group, related_name='custom_user_groups')
-    user_permissions = models.ManyToManyField(Permission, related_name='custom_user_permissions')
+    user_permissions = models.ManyToManyField(
+        Permission, related_name='custom_user_permissions')
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
@@ -44,6 +45,30 @@ class UserMessenger(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     messenger_name = models.CharField(max_length=255)
     messenger_username = models.CharField(max_length=255)
+
+    class Meta:
+        managed = True
+        app_label = 'user_app'
+
+
+class CustomUser(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    group_name = models.CharField(max_length=255)
+    profession = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        app_label = 'user_app'
+
+
+class MembersOfGroup(models.Model):
+    group = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user_name_from_message = models.CharField(max_length=255)
+    service_name = models.CharField(max_length=255)
+    chat_link = models.URLField(max_length=500, null=True, blank=True)
+    added = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True

@@ -16,16 +16,21 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='User',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('password', models.CharField(max_length=128, verbose_name='password')),
-                ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
+                ('password', models.CharField(
+                    max_length=128, verbose_name='password')),
+                ('last_login', models.DateTimeField(
+                    blank=True, null=True, verbose_name='last login')),
                 ('username', models.CharField(max_length=255, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('is_active', models.BooleanField(default=True)),
                 ('is_staff', models.BooleanField(default=False)),
                 ('is_superuser', models.BooleanField(default=False)),
-                ('groups', models.ManyToManyField(related_name='custom_user_groups', to='auth.group')),
-                ('user_permissions', models.ManyToManyField(related_name='custom_user_permissions', to='auth.permission')),
+                ('groups', models.ManyToManyField(
+                    related_name='custom_user_groups', to='auth.group')),
+                ('user_permissions', models.ManyToManyField(
+                    related_name='custom_user_permissions', to='auth.permission')),
             ],
             options={
                 'db_table': 'users',
@@ -35,10 +40,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='UserMessenger',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('messenger_name', models.CharField(max_length=255)),
                 ('messenger_username', models.CharField(max_length=255)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user_app.user')),
+                ('user', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='user_app.user')),
             ],
             options={
                 'managed': True,

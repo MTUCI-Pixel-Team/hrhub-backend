@@ -30,6 +30,7 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
     "150.241.98.21",
+    "193.233.114.35",
     "95.220.5.105",
     "127.0.0.1",
     "hrhub.pixel-team.ru",
@@ -39,6 +40,8 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
+    "channels",
     "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -51,7 +54,6 @@ INSTALLED_APPS = [
     "user_app",
     "messaging_app",
     "services_app",
-    "tg_bot",
 ]
 
 MIDDLEWARE = [
@@ -85,6 +87,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
+ASGI_APPLICATION = "backend.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
@@ -173,4 +182,11 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
 MEDIA_URL = "/media/"
+
+VK_TOKEN = "vk1.a.NqJhH8uW_2FUi51NcjYfeZBkRPQukguALNozFtdmI4bBtqdPumiG6muSYSJh-6LycCXV0vCFD0aaV-wWxlSgirtO4TszG928nfeJXptqPIDKflaeFRf77ADvjiciwHaDz53AwiNb5Zwfzur9xfdUK_YsmjsD8PT-VkG6LV0iD0iGen95Tb7o1Ic3zUPJ81uXAiA5oGWBgeVkO3GMiD9Hdw"
+
+# авито
+CLIENT_ID = "pIqySTcikdh-L4Z3oCOI"
+CLIENT_SECRET = "2SfzD9tl4WCrhgTfnVWggXj2zrpOBPiSW2V2PCyg"
