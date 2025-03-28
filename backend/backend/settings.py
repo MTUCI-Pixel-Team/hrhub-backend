@@ -21,13 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-e25dj=30_v&dvc08wm5n@4s=+c-tewd4g5he3iw25(j=)lyke#"
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "django-insecure-e25dj=30_v&dvc08wm5n@4s=+c-tewd4g5he3iw25(j=)lyke#"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
-    "147.45.40.23",
+    "150.241.98.21",
     "95.220.5.105",
     "127.0.0.1",
     "hrhub.pixel-team.ru",
@@ -89,16 +91,13 @@ WSGI_APPLICATION = "backend.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "hrhubdb",
-        "USER": "denis",
-        "PASSWORD": "admin1337",
-        "HOST": "147.45.40.23",
-        "PORT": "5432",
+        "NAME": os.environ.get("DB_NAME", "hrhubdb"),
+        "USER": os.environ.get("DB_USER", "postgres"),
+        "PASSWORD": os.environ.get("DB_PASS", "postgres"),
+        "HOST": os.environ.get("DB_HOST", "db"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -169,7 +168,7 @@ CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://147.45.40.23:5173",
+    "http://150.241.98.21:5173",
     "http://127.0.0.1:5173",
 ]
 

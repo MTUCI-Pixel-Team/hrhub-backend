@@ -11,16 +11,15 @@ services:
             - '7000:7000'
         volumes:
             - ./backend:/backend
+            - ./.env:/backend/.env
         command: >
             sh -c "python manage.py wait_for_db &&
                    python manage.py migrate &&
                    python manage.py runserver 0.0.0.0:7000"
-        environment:
-            - DB_HOST=147.45.40.23
-            - DB_NAME=hrhubdb
-            - DB_USER=denis
-            - DB_PASS=admin1337
-            - DB_PORT=5432
+        env_file:
+            - .env
+        depends_on:
+            - db
     tg_bot:
         user: root
         build:
@@ -29,5 +28,22 @@ services:
                 - DEV=true
         volumes:
             - ./backend:/backend
+            - ./.env:/backend/.env
         command: >
             sh -c "python tg_bot/TG.py"
+        env_file:
+            - .env
+        depends_on:
+            - db
+            - app
+    db:
+        image: postgres:15-alpine
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        env_file:
+            - .env
+        ports:
+            - "5432:5432"
+
+volumes:
+    postgres_data:

@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED 1
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 COPY ./backend /backend
+# Удаляем копирование .env файла, так как он будет монтироваться как том
 WORKDIR /backend
 EXPOSE 7000
 
@@ -15,19 +16,20 @@ RUN python -m venv /py && \
     apk update && \
     apk add --update --no-cache postgresql-client && \
     apk add --update --no-cache --virtual .tmp-build-deps \
-        build-base postgresql-dev musl-dev && \
+    build-base postgresql-dev musl-dev && \
     /py/bin/pip install -r /tmp/requirements.txt && \
     /py/bin/pip install clarifai_grpc && \
+    /py/bin/pip install python-dotenv && \
     if [ $DEV = "true" ]; \
-        then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
+    then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
     fi && \
     chmod -R 777 /backend/media && \
     rm -rf /tmp && \
     apk del .tmp-build-deps && \
     adduser \
-        --disabled-password \
-        --no-create-home \
-        django-user
+    --disabled-password \
+    --no-create-home \
+    django-user
 
 ENV PATH="/py/bin:$PATH"
 

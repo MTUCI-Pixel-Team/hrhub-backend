@@ -29,9 +29,22 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
             - name: Setup SSH
-              uses: webfactory/ssh-agent@v0.5.3
+              uses: webfactory/ssh-agent@v0.8.0
               with:
                   ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+            - name: Add known hosts
+              run: |
+                  mkdir -p ~/.ssh
+                  ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
             - name: Deploy to Server
               run: |
-                  ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /home/hr-hub/hrhub-backend && git pull && docker-compose down && docker-compose up --build -d"
+                  ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "\
+                  echo 'Starting deployment...' && \
+                  mkdir -p ~/hrhub-backend && \
+                  cd ~/hrhub-backend && \
+                  git pull && \
+                  docker-compose pull && \
+                  docker-compose down --remove-orphans && \
+                  docker-compose up -d --build && \
+                  echo 'Deployment completed successfully'"
+              timeout-minutes: 10

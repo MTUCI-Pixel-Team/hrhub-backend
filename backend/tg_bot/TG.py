@@ -4,17 +4,20 @@ from app.handlers import router
 from config import TOKEN
 
 
+print(TOKEN)
+
+
 # Запускаем бота и обработчик сообщений
 async def main():
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
     dp.include_router(router)
-    print('Бот запущен')
+    print("Бот запущен")
     await dp.start_polling(bot)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print('Бот выключен')
+        print("Бот выключен")
