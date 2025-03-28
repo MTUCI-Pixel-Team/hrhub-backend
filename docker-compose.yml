@@ -44,8 +44,13 @@ services:
                 - DEV=true
         volumes:
             - ./backend:/backend
+            - ./.env:/backend/.env
         command: >
             sh -c "sleep 10 && python parserMailYandex/main.py"
+        env_file:
+            - .env
+        depends_on:
+            - app
     vk_bot:
         user: root
         build:
@@ -54,8 +59,14 @@ services:
                 - DEV=true
         volumes:
             - ./backend:/backend
+            - ./.env:/backend/.env
         command: >
             sh -c "python manage.py run_vk_bot"
+        env_file:
+            - .env
+        depends_on:
+            - db
+            - app
     db:
         image: postgres:15-alpine
         volumes:
@@ -67,4 +78,4 @@ services:
 
 volumes:
     postgres_data:
-    
+

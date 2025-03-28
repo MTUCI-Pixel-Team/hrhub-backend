@@ -6,7 +6,6 @@ ENV PYTHONUNBUFFERED=1
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 COPY ./backend /backend
-# Удаляем копирование .env файла, так как он будет монтироваться как том
 WORKDIR /backend
 EXPOSE 7000
 

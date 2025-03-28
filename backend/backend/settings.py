@@ -21,9 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY", "django-insecure-e25dj=30_v&dvc08wm5n@4s=+c-tewd4g5he3iw25(j=)lyke#"
-)
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
@@ -185,8 +183,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 MEDIA_URL = "/media/"
 
-VK_TOKEN = "vk1.a.NqJhH8uW_2FUi51NcjYfeZBkRPQukguALNozFtdmI4bBtqdPumiG6muSYSJh-6LycCXV0vCFD0aaV-wWxlSgirtO4TszG928nfeJXptqPIDKflaeFRf77ADvjiciwHaDz53AwiNb5Zwfzur9xfdUK_YsmjsD8PT-VkG6LV0iD0iGen95Tb7o1Ic3zUPJ81uXAiA5oGWBgeVkO3GMiD9Hdw"
+VK_TOKEN = os.environ.get(
+    "VK_TOKEN",
+    "",
+)
 
 # авито
-CLIENT_ID = "pIqySTcikdh-L4Z3oCOI"
-CLIENT_SECRET = "2SfzD9tl4WCrhgTfnVWggXj2zrpOBPiSW2V2PCyg"
+CLIENT_ID = os.environ.get("AVITO_CLIENT_ID", "")
+CLIENT_SECRET = os.environ.get("AVITO_CLIENT_SECRET", "")
