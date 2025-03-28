@@ -48,7 +48,16 @@ jobs:
                   echo 'Starting deployment...' && \
                   mkdir -p ~/hrhub-backend && \
                   cd ~/hrhub-backend && \
-                  git pull && \
+                  if [ ! -d .git ]; then \
+                    echo 'Initializing git repository...' && \
+                    git init && \
+                    git remote add origin https://github.com/YOUR_USERNAME/hrhub-backend.git && \
+                    git fetch && \
+                    git checkout -f main; \
+                  else \
+                    git fetch && \
+                    git reset --hard origin/main; \
+                  fi && \
                   docker-compose pull && \
                   docker-compose down --remove-orphans && \
                   docker-compose up -d --build && \
